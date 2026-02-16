@@ -1,0 +1,527 @@
+{
+  "version": "1",
+  "metadata": {
+    "marimo_version": "0.19.2"
+  },
+  "cells": [
+    {
+      "id": "Hbol",
+      "code_hash": "8b324fce8f79b8b858034f94449ea154",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h1 id=\"mini-challenge-3-question-2-entity-interactions-relationships\">Mini-Challenge 3 - Question 2: Entity Interactions &amp; Relationships</h1>\n<span class=\"paragraph\"><strong>Team Members:</strong> Singh AmanDeep, Kim Wilmink, Dominic van den Bungelaar</span>\n<hr />\n<h2 id=\"question-21-understanding-interactions-between-vessels-and-people\">Question 2.1: Understanding Interactions Between Vessels and People</h2>\n<blockquote>\n<span class=\"paragraph\"><em>Clepper has noticed that people often communicate with (or about) the same people or vessels, and that grouping them together may help with the investigation. Use visual analytics to help Clepper understand and explore the interactions and relationships between vessels and people in the knowledge graph.</em></span>\n</blockquote>\n<span class=\"paragraph\">This analysis provides interactive visualizations to explore:</span>\n<ol>\n<li><strong>Communication Network</strong> - Who talks to whom and how frequently</li>\n<li><strong>Relationship Network</strong> - Formal relationships (Colleagues, Operates, Reports, etc.)</li>\n<li><strong>Entity Profiles</strong> - Deep-dive into individual actors</li>\n</ol></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "lEQa",
+      "code_hash": "4f3e44b2cb34d8987337bf42b1c60e70",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><hr />\n<h2 id=\"1-communication-network-overview\">1. Communication Network Overview</h2>\n<span class=\"paragraph\">This visualization shows the <strong>communication flow</strong> between all entities (persons, vessels, organizations). Edge thickness represents communication frequency.</span></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "SFPL",
+      "code_hash": "e2e9eebc1f33719a89913ec668a63ec5",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><hr />\n<h2 id=\"2-communication-frequency-matrix-heatmap\">2. Communication Frequency Matrix (Heatmap)</h2>\n<span class=\"paragraph\">This heatmap provides a detailed view of <strong>communication intensity</strong> between entities. Darker cells indicate more frequent communication.</span></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "Kclp",
+      "code_hash": "7b6dcdbe2c2d50b646681cedc8cad799",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><hr />\n<h2 id=\"3-formal-relationship-network\">3. Formal Relationship Network</h2>\n<span class=\"paragraph\">Beyond communications, entities have <strong>formal relationships</strong> such as Colleagues, Operates, Reports, Coordinates, etc. This network shows these structural connections.</span></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "nWHF",
+      "code_hash": "2869626e37304764955c2371db3c281f",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><hr />\n<h2 id=\"4-entity-deep-dive-individual-communication-profiles\">4. Entity Deep-Dive: Individual Communication Profiles</h2>\n<span class=\"paragraph\">Select an entity to see their complete communication profile - who they talk to, how often, and the content of their messages.</span></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "qnkX",
+      "code_hash": "329a2d6fa29a9bbdd232a19dd64e2f8f",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><hr />\n<h2 id=\"5-communication-timeline\">5. Communication Timeline</h2>\n<span class=\"paragraph\">Visualize when communications happen over the two-week observation period.</span></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "Vxnm",
+      "code_hash": "115879b030969f90b6539634bf7083f0",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><hr />\n<h2 id=\"6-key-statistics-summary\">6. Key Statistics Summary</h2></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "ecfG",
+      "code_hash": "a1e110ae91cd8f62ed0306116dff625e",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><hr />\n<h2 id=\"key-findings-for-question-21\">Key Findings for Question 2.1</h2>\n<span class=\"paragraph\">Based on the visual analytics above, several insights emerge about interactions and relationships:</span>\n<ol>\n<li><strong>Communication Hubs</strong>: Certain entities (like <code>Mako</code>, <code>Reef Guardian</code>, <code>Remora</code>, <code>Neptune</code>) show high communication activity, suggesting they are central to operations.</li>\n<li><strong>Journalist Pair</strong>: <code>Clepper Jensen</code> and <code>Miranda Jordan</code> have the highest bilateral communication (20+18 messages), consistent with their investigative collaboration.</li>\n<li><strong>Pseudonym Network</strong>: Entities like <code>The Intern</code>, <code>Mrs. Money</code>, <code>The Lookout</code>, <code>Boss</code>, <code>The Middleman</code> form a distinct communication cluster, suggesting an organized network using code names.</li>\n<li><strong>Vessel-Organization Links</strong>: Several vessels (Neptune, Remora, Mako) communicate with <code>V. Miesel Shipping</code>, suggesting shipping operations coordination.</li>\n<li><strong>Green Guardians Network</strong>: Conservation vessels (<code>Reef Guardian</code>, <code>Horizon</code>, <code>Sentinel</code>, <code>EcoVigil</code>) are connected to the <code>Green Guardians</code> organization through formal relationships.</li>\n</ol>\n<span class=\"paragraph\"><em>Continue to Question 2.2 for community detection and topic analysis.</em></span></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "MJUe",
+      "code_hash": "46c4220afeea42c6e20afba0ce8dffcd",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/plain": ""
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "vblA",
+      "code_hash": "033316c1f0f83168b04e6dbc8ef83d5f",
+      "outputs": [
+        {
+          "type": "error",
+          "ename": "exception",
+          "evalue": "[Errno 2] No such file or directory: 'MC3_graph.json'",
+          "traceback": []
+        }
+      ],
+      "console": [
+        {
+          "type": "stream",
+          "name": "stderr",
+          "text": "<span class=\"codehilite\"><div class=\"highlight\"><pre><span></span><span class=\"gt\">Traceback (most recent call last):</span>\n  File <span class=\"nb\">&quot;C:\\Users\\Singh\\miniconda3\\envs\\vabd_2026\\Lib\\site-packages\\marimo\\_runtime\\executor.py&quot;</span>, line <span class=\"m\">138</span>, in <span class=\"n\">execute_cell</span>\n<span class=\"w\">    </span><span class=\"n\">exec</span><span class=\"p\">(</span><span class=\"n\">cell</span><span class=\"o\">.</span><span class=\"n\">body</span><span class=\"p\">,</span> <span class=\"n\">glbls</span><span class=\"p\">)</span>\n<span class=\"w\">    </span><span class=\"pm\">~~~~^^^^^^^^^^^^^^^^^^</span>\n  File <span class=\"nb\">&quot;C:\\Users\\Singh\\AppData\\Local\\Temp\\marimo_19872\\__marimo__cell_vblA_.py&quot;</span>, line <span class=\"m\">2</span>, in <span class=\"n\">&lt;module&gt;</span>\n<span class=\"w\">    </span><span class=\"k\">with</span> <span class=\"nb\">open</span><span class=\"p\">(</span><span class=\"s1\">&#39;MC3_graph.json&#39;</span><span class=\"p\">,</span> <span class=\"s1\">&#39;r&#39;</span><span class=\"p\">)</span> <span class=\"k\">as</span> <span class=\"n\">f</span><span class=\"p\">:</span>\n<span class=\"w\">         </span><span class=\"pm\">~~~~^^^^^^^^^^^^^^^^^^^^^^^</span>\n<span class=\"gr\">FileNotFoundError</span>: <span class=\"n\">[Errno 2] No such file or directory: &#39;MC3_graph.json&#39;</span>\n</pre></div>\n</span>",
+          "mimetype": "application/vnd.marimo+traceback"
+        }
+      ]
+    },
+    {
+      "id": "bkHC",
+      "code_hash": "b7965be84d7ba84f280f9062daea9cdc",
+      "outputs": [
+        {
+          "type": "error",
+          "ename": "multiple-defs",
+          "evalue": "The variable 'comm' was defined by another cell",
+          "traceback": []
+        },
+        {
+          "type": "error",
+          "ename": "multiple-defs",
+          "evalue": "The variable 'receiver' was defined by another cell",
+          "traceback": []
+        },
+        {
+          "type": "error",
+          "ename": "multiple-defs",
+          "evalue": "The variable 'rel_type' was defined by another cell",
+          "traceback": []
+        },
+        {
+          "type": "error",
+          "ename": "multiple-defs",
+          "evalue": "The variable 'sender' was defined by another cell",
+          "traceback": []
+        },
+        {
+          "type": "error",
+          "ename": "multiple-defs",
+          "evalue": "The variable 'senders' was defined by another cell",
+          "traceback": []
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "PKri",
+      "code_hash": "1ab1cc9df7dc143c3fd15b52b2bb1601",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/html": "<div style='display: flex;flex: 1;flex-direction: row;justify-content: flex-start;align-items: normal;flex-wrap: nowrap;gap: 2rem'><marimo-ui-element object-id='PKri-0' random-id='ab91ec1f-2dc7-43a8-d253-681dcc027c99'><marimo-multiselect data-initial-value='[&quot;Person&quot;,&quot;Vessel&quot;,&quot;Organization&quot;]' data-label='&quot;&lt;span class=&#92;&quot;markdown prose dark:prose-invert contents&#92;&quot;&gt;&lt;span class=&#92;&quot;paragraph&#92;&quot;&gt;Show Entity Types:&lt;/span&gt;&lt;/span&gt;&quot;' data-options='[&quot;Person&quot;,&quot;Vessel&quot;,&quot;Organization&quot;,&quot;Group&quot;]' data-full-width='false'></marimo-multiselect></marimo-ui-element><marimo-ui-element object-id='PKri-1' random-id='d4a22e44-867a-3d3c-2e7d-8972cda2d691'><marimo-slider data-initial-value='2' data-label='&quot;&lt;span class=&#92;&quot;markdown prose dark:prose-invert contents&#92;&quot;&gt;&lt;span class=&#92;&quot;paragraph&#92;&quot;&gt;Minimum Communications to Show Edge:&lt;/span&gt;&lt;/span&gt;&quot;' data-start='1' data-stop='20' data-step='1' data-steps='[]' data-debounce='false' data-disabled='false' data-orientation='&quot;horizontal&quot;' data-show-value='false' data-include-input='false' data-full-width='false'></marimo-slider></marimo-ui-element><marimo-ui-element object-id='PKri-2' random-id='0d759dc6-92c7-d5f1-2d78-d1baf6b575e4'><marimo-dropdown data-initial-value='[&quot;spring&quot;]' data-label='&quot;&lt;span class=&#92;&quot;markdown prose dark:prose-invert contents&#92;&quot;&gt;&lt;span class=&#92;&quot;paragraph&#92;&quot;&gt;Network Layout:&lt;/span&gt;&lt;/span&gt;&quot;' data-options='[&quot;spring&quot;,&quot;circular&quot;,&quot;kamada_kawai&quot;]' data-allow-select-none='false' data-searchable='false' data-full-width='false'></marimo-dropdown></marimo-ui-element></div>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "Xref",
+      "code_hash": "5ad58eff5e5756fb6c58d7bb7d2a941e",
+      "outputs": [
+        {
+          "type": "error",
+          "ename": "multiple-defs",
+          "evalue": "The variable 'hover_texts' was defined by another cell",
+          "traceback": []
+        },
+        {
+          "type": "error",
+          "ename": "multiple-defs",
+          "evalue": "The variable 'n' was defined by another cell",
+          "traceback": []
+        },
+        {
+          "type": "error",
+          "ename": "multiple-defs",
+          "evalue": "The variable 'nodes_of_type' was defined by another cell",
+          "traceback": []
+        },
+        {
+          "type": "error",
+          "ename": "multiple-defs",
+          "evalue": "The variable 'trace' was defined by another cell",
+          "traceback": []
+        },
+        {
+          "type": "error",
+          "ename": "multiple-defs",
+          "evalue": "The variable 'u' was defined by another cell",
+          "traceback": []
+        },
+        {
+          "type": "error",
+          "ename": "multiple-defs",
+          "evalue": "The variable 'v' was defined by another cell",
+          "traceback": []
+        },
+        {
+          "type": "error",
+          "ename": "multiple-defs",
+          "evalue": "The variable 'x0' was defined by another cell",
+          "traceback": []
+        },
+        {
+          "type": "error",
+          "ename": "multiple-defs",
+          "evalue": "The variable 'x1' was defined by another cell",
+          "traceback": []
+        },
+        {
+          "type": "error",
+          "ename": "multiple-defs",
+          "evalue": "The variable 'x_vals' was defined by another cell",
+          "traceback": []
+        },
+        {
+          "type": "error",
+          "ename": "multiple-defs",
+          "evalue": "The variable 'y0' was defined by another cell",
+          "traceback": []
+        },
+        {
+          "type": "error",
+          "ename": "multiple-defs",
+          "evalue": "The variable 'y1' was defined by another cell",
+          "traceback": []
+        },
+        {
+          "type": "error",
+          "ename": "multiple-defs",
+          "evalue": "The variable 'y_vals' was defined by another cell",
+          "traceback": []
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "BYtC",
+      "code_hash": "4954af8d4ef941347dcf3aa14fe818c7",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/html": "<marimo-ui-element object-id='BYtC-0' random-id='918941a6-595a-4cc0-8559-fa49016a6542'><marimo-multiselect data-initial-value='[&quot;Person&quot;,&quot;Vessel&quot;]' data-label='&quot;&lt;span class=&#92;&quot;markdown prose dark:prose-invert contents&#92;&quot;&gt;&lt;span class=&#92;&quot;paragraph&#92;&quot;&gt;Include Entity Types in Heatmap:&lt;/span&gt;&lt;/span&gt;&quot;' data-options='[&quot;Person&quot;,&quot;Vessel&quot;,&quot;Organization&quot;]' data-full-width='false'></marimo-multiselect></marimo-ui-element>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "RGSE",
+      "code_hash": "2b6543e520a4ff3eb3c7df077addf162",
+      "outputs": [
+        {
+          "type": "error",
+          "ename": "exception",
+          "evalue": "Name `all_entities` is not defined. It was expected to be defined in ",
+          "traceback": []
+        }
+      ],
+      "console": [
+        {
+          "type": "stream",
+          "name": "stderr",
+          "text": "<span class=\"codehilite\"><div class=\"highlight\"><pre><span></span><span class=\"gt\">Traceback (most recent call last):</span>\n  File <span class=\"nb\">&quot;C:\\Users\\Singh\\miniconda3\\envs\\vabd_2026\\Lib\\site-packages\\marimo\\_runtime\\executor.py&quot;</span>, line <span class=\"m\">138</span>, in <span class=\"n\">execute_cell</span>\n<span class=\"w\">    </span><span class=\"n\">exec</span><span class=\"p\">(</span><span class=\"n\">cell</span><span class=\"o\">.</span><span class=\"n\">body</span><span class=\"p\">,</span> <span class=\"n\">glbls</span><span class=\"p\">)</span>\n<span class=\"w\">    </span><span class=\"pm\">~~~~^^^^^^^^^^^^^^^^^^</span>\n  File <span class=\"nb\">&quot;C:\\Users\\Singh\\AppData\\Local\\Temp\\marimo_19872\\__marimo__cell_RGSE_.py&quot;</span>, line <span class=\"m\">21</span>, in <span class=\"n\">&lt;module&gt;</span>\n<span class=\"w\">    </span><span class=\"n\">entities_hm</span><span class=\"p\">,</span> <span class=\"n\">matrix_hm</span> <span class=\"o\">=</span> <span class=\"n\">build_heatmap_data</span><span class=\"p\">(</span><span class=\"n\">heatmap_type_filter</span><span class=\"o\">.</span><span class=\"n\">value</span><span class=\"p\">)</span>\n<span class=\"w\">                             </span><span class=\"pm\">~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^</span>\n  File <span class=\"nb\">&quot;C:\\Users\\Singh\\AppData\\Local\\Temp\\marimo_19872\\__marimo__cell_RGSE_.py&quot;</span>, line <span class=\"m\">4</span>, in <span class=\"n\">build_heatmap_data</span>\n<span class=\"w\">    </span><span class=\"n\">filtered</span> <span class=\"o\">=</span> <span class=\"p\">[</span><span class=\"n\">eid</span> <span class=\"k\">for</span> <span class=\"n\">eid</span><span class=\"p\">,</span> <span class=\"n\">e</span> <span class=\"ow\">in</span> <span class=\"n\">all_entities</span><span class=\"o\">.</span><span class=\"n\">items</span><span class=\"p\">()</span>\n<span class=\"w\">                                  </span><span class=\"pm\">^^^^^^^^^^^^</span>\n<span class=\"gr\">NameError</span>: <span class=\"n\">name &#39;all_entities&#39; is not defined</span>\n</pre></div>\n</span>",
+          "mimetype": "application/vnd.marimo+traceback"
+        }
+      ]
+    },
+    {
+      "id": "emfo",
+      "code_hash": "5b65cf695480cb8830e3c9ea63dbc6b8",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/html": "<marimo-ui-element object-id='emfo-0' random-id='8f47e4c7-e5db-da3e-d378-b981b449867e'><marimo-multiselect data-initial-value='[&quot;Colleagues&quot;,&quot;Operates&quot;,&quot;Reports&quot;,&quot;Suspicious&quot;]' data-label='&quot;&lt;span class=&#92;&quot;markdown prose dark:prose-invert contents&#92;&quot;&gt;&lt;span class=&#92;&quot;paragraph&#92;&quot;&gt;Show Relationship Types:&lt;/span&gt;&lt;/span&gt;&quot;' data-options='[&quot;Colleagues&quot;,&quot;Operates&quot;,&quot;Reports&quot;,&quot;Coordinates&quot;,&quot;Suspicious&quot;,&quot;Friends&quot;,&quot;Unfriendly&quot;,&quot;Jurisdiction&quot;,&quot;AccessPermission&quot;]' data-full-width='false'></marimo-multiselect></marimo-ui-element>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "Hstk",
+      "code_hash": "42d65519b3872093d31943f617062d6e",
+      "outputs": [
+        {
+          "type": "error",
+          "ename": "multiple-defs",
+          "evalue": "The variable 'hover_texts' was defined by another cell",
+          "traceback": []
+        },
+        {
+          "type": "error",
+          "ename": "multiple-defs",
+          "evalue": "The variable 'n' was defined by another cell",
+          "traceback": []
+        },
+        {
+          "type": "error",
+          "ename": "multiple-defs",
+          "evalue": "The variable 'nodes_of_type' was defined by another cell",
+          "traceback": []
+        },
+        {
+          "type": "error",
+          "ename": "multiple-defs",
+          "evalue": "The variable 'rel_type' was defined by another cell",
+          "traceback": []
+        },
+        {
+          "type": "error",
+          "ename": "multiple-defs",
+          "evalue": "The variable 'trace' was defined by another cell",
+          "traceback": []
+        },
+        {
+          "type": "error",
+          "ename": "multiple-defs",
+          "evalue": "The variable 'u' was defined by another cell",
+          "traceback": []
+        },
+        {
+          "type": "error",
+          "ename": "multiple-defs",
+          "evalue": "The variable 'v' was defined by another cell",
+          "traceback": []
+        },
+        {
+          "type": "error",
+          "ename": "multiple-defs",
+          "evalue": "The variable 'x0' was defined by another cell",
+          "traceback": []
+        },
+        {
+          "type": "error",
+          "ename": "multiple-defs",
+          "evalue": "The variable 'x1' was defined by another cell",
+          "traceback": []
+        },
+        {
+          "type": "error",
+          "ename": "multiple-defs",
+          "evalue": "The variable 'x_vals' was defined by another cell",
+          "traceback": []
+        },
+        {
+          "type": "error",
+          "ename": "multiple-defs",
+          "evalue": "The variable 'y0' was defined by another cell",
+          "traceback": []
+        },
+        {
+          "type": "error",
+          "ename": "multiple-defs",
+          "evalue": "The variable 'y1' was defined by another cell",
+          "traceback": []
+        },
+        {
+          "type": "error",
+          "ename": "multiple-defs",
+          "evalue": "The variable 'y_vals' was defined by another cell",
+          "traceback": []
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "iLit",
+      "code_hash": "d6c401f7e05c6e54f8d173a1c4734f5e",
+      "outputs": [
+        {
+          "type": "error",
+          "ename": "exception",
+          "evalue": "An ancestor raised an exception (FileNotFoundError): ",
+          "traceback": []
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "ZHCJ",
+      "code_hash": "057e6f30e48eb172228aac561bc0408b",
+      "outputs": [
+        {
+          "type": "error",
+          "ename": "multiple-defs",
+          "evalue": "The variable 'comms' was defined by another cell",
+          "traceback": []
+        },
+        {
+          "type": "error",
+          "ename": "multiple-defs",
+          "evalue": "The variable 'receiver' was defined by another cell",
+          "traceback": []
+        },
+        {
+          "type": "error",
+          "ename": "multiple-defs",
+          "evalue": "The variable 'sender' was defined by another cell",
+          "traceback": []
+        },
+        {
+          "type": "error",
+          "ename": "multiple-defs",
+          "evalue": "The variable 'senders' was defined by another cell",
+          "traceback": []
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "ROlb",
+      "code_hash": "cfda42c0c929771d3c3646b479411a0a",
+      "outputs": [
+        {
+          "type": "error",
+          "ename": "exception",
+          "evalue": "Name `selected_entity` is not defined. It was expected to be defined in ",
+          "traceback": []
+        }
+      ],
+      "console": [
+        {
+          "type": "stream",
+          "name": "stderr",
+          "text": "<span class=\"codehilite\"><div class=\"highlight\"><pre><span></span><span class=\"gt\">Traceback (most recent call last):</span>\n  File <span class=\"nb\">&quot;C:\\Users\\Singh\\miniconda3\\envs\\vabd_2026\\Lib\\site-packages\\marimo\\_runtime\\executor.py&quot;</span>, line <span class=\"m\">139</span>, in <span class=\"n\">execute_cell</span>\n<span class=\"w\">    </span><span class=\"k\">return</span> <span class=\"nb\">eval</span><span class=\"p\">(</span><span class=\"n\">cell</span><span class=\"o\">.</span><span class=\"n\">last_expr</span><span class=\"p\">,</span> <span class=\"n\">glbls</span><span class=\"p\">)</span>\n  File <span class=\"nb\">&quot;C:\\Users\\Singh\\AppData\\Local\\Temp\\marimo_19872\\__marimo__cell_ROlb_.py&quot;</span>, line <span class=\"m\">2</span>, in <span class=\"n\">&lt;module&gt;</span>\n<span class=\"w\">    </span><span class=\"c1\">### Formal Relationships of {selected_entity}</span>\n<span class=\"gr\">NameError</span>: <span class=\"n\">name &#39;selected_entity&#39; is not defined</span>\n</pre></div>\n</span>",
+          "mimetype": "application/vnd.marimo+traceback"
+        }
+      ]
+    },
+    {
+      "id": "TqIu",
+      "code_hash": "9e3ac8156794db7b94fd9f93f7668db9",
+      "outputs": [
+        {
+          "type": "error",
+          "ename": "multiple-defs",
+          "evalue": "The variable 'comm' was defined by another cell",
+          "traceback": []
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "DnEU",
+      "code_hash": "e5e1036546d94270d0b3fa77383c612b",
+      "outputs": [
+        {
+          "type": "error",
+          "ename": "multiple-defs",
+          "evalue": "The variable 'comms' was defined by another cell",
+          "traceback": []
+        },
+        {
+          "type": "error",
+          "ename": "multiple-defs",
+          "evalue": "The variable 'receiver' was defined by another cell",
+          "traceback": []
+        },
+        {
+          "type": "error",
+          "ename": "multiple-defs",
+          "evalue": "The variable 'sender' was defined by another cell",
+          "traceback": []
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "ulZA",
+      "code_hash": "ac1dbebd80396b37ad7c6f005a62e873",
+      "outputs": [
+        {
+          "type": "error",
+          "ename": "exception",
+          "evalue": "Name `top_active_df` is not defined. It was expected to be defined in ",
+          "traceback": []
+        }
+      ],
+      "console": [
+        {
+          "type": "stream",
+          "name": "stderr",
+          "text": "<span class=\"codehilite\"><div class=\"highlight\"><pre><span></span><span class=\"gt\">Traceback (most recent call last):</span>\n  File <span class=\"nb\">&quot;C:\\Users\\Singh\\miniconda3\\envs\\vabd_2026\\Lib\\site-packages\\marimo\\_runtime\\executor.py&quot;</span>, line <span class=\"m\">139</span>, in <span class=\"n\">execute_cell</span>\n<span class=\"w\">    </span><span class=\"k\">return</span> <span class=\"nb\">eval</span><span class=\"p\">(</span><span class=\"n\">cell</span><span class=\"o\">.</span><span class=\"n\">last_expr</span><span class=\"p\">,</span> <span class=\"n\">glbls</span><span class=\"p\">)</span>\n  File <span class=\"nb\">&quot;C:\\Users\\Singh\\AppData\\Local\\Temp\\marimo_19872\\__marimo__cell_ulZA_.py&quot;</span>, line <span class=\"m\">4</span>, in <span class=\"n\">&lt;module&gt;</span>\n<span class=\"w\">    </span><span class=\"p\">{</span><span class=\"n\">mo</span><span class=\"o\">.</span><span class=\"n\">ui</span><span class=\"o\">.</span><span class=\"n\">table</span><span class=\"p\">(</span><span class=\"n\">top_active_df</span><span class=\"p\">)}</span>\n<span class=\"w\">                 </span><span class=\"pm\">^^^^^^^^^^^^^</span>\n<span class=\"gr\">NameError</span>: <span class=\"n\">name &#39;top_active_df&#39; is not defined</span>\n</pre></div>\n</span>",
+          "mimetype": "application/vnd.marimo+traceback"
+        }
+      ]
+    }
+  ]
+}
