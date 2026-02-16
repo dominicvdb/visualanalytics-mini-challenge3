@@ -77,7 +77,7 @@ def _(G, datetime, pd):
 
 @app.cell
 def _(df_comms):
-    df_comms['timestamp'].min()
+    df_comms['timestamp'].max()
     return
 
 
@@ -446,18 +446,18 @@ def _(
             const y1 = yScale(nodeMap.get(d.source).y);
             const x2 = xScale(nodeMap.get(d.target).x);
             const y2 = yScale(nodeMap.get(d.target).y);
-    
+
             const dx = x2 - x1;
             const dy = y2 - y1;
             const dist = Math.sqrt(dx * dx + dy * dy);
-    
+
             const hasBidi = edgeSet.has(d.target + "|" + d.source);
             const offset = hasBidi ? 30 : 0;
-    
+
             // Midpoint + perpendicular offset
             const mx = (x1 + x2) / 2 + (-dy / dist) * offset;
             const my = (y1 + y2) / 2 + (dx / dist) * offset;
-    
+
             return "M" + x1 + "," + y1 +
                    " Q" + mx + "," + my +
                    " " + x2 + "," + y2;
@@ -549,6 +549,750 @@ def _(
         day_slider,
         hour_slider
     ])
+    return
+
+
+@app.cell
+def _(G, df_comms, json_lib, pd):
+    comm_details = []
+    for c_node in df_comms["node_id"]:
+        attrs_c = G.nodes[c_node]
+        ts_c = attrs_c["timestamp"]
+
+        # Find sender and receiver entities
+        sender = None
+        receiver = None
+        for pred in G.predecessors(c_node):
+            if G.nodes[pred].get("type") == "Entity":
+                edge_data = G.edges[pred, c_node]
+                if edge_data.get("type") == "sent":
+                    sender = pred
+        for succ in G.successors(c_node):
+            if G.nodes[succ].get("type") == "Entity":
+                edge_data = G.edges[c_node, succ]
+                if edge_data.get("type") == "received":
+                    receiver = succ
+
+        if sender and receiver:
+            comm_details.append({
+                "node_id": c_node,
+                "timestamp": ts_c,
+                "sender_name": G.nodes[sender].get("name", sender),
+                "sender_type": G.nodes[sender].get("sub_type", ""),
+                "receiver_name": G.nodes[receiver].get("name", receiver),
+                "receiver_type": G.nodes[receiver].get("sub_type", ""),
+            })
+
+    df_details = pd.DataFrame(comm_details)
+    df_details["ts"] = pd.to_datetime(df_details["timestamp"])
+    df_details["date_str"] = df_details["ts"].dt.date.astype(str)
+    df_details["hour_float"] = df_details["ts"].dt.hour + df_details["ts"].dt.minute / 60
+
+    # Convert Timestamp to string before JSON serialization
+    df_details["ts_str"] = df_details["ts"].astype(str)
+    details_json = json_lib.dumps(
+        df_details.drop(columns=["ts"]).to_dict(orient="records")
+    )
+    print(f"{len(df_details)} communications with sender/receiver info")
+    df_details.head()
+    return details_json, df_details
+
+
+@app.cell
+def _(df_details, mo):
+    mo.ui.table(df_details)
+    return
+
+
+@app.cell
+def _(details_json, df_details, json_lib, mo):
+    unique_dates_list = json_lib.dumps(sorted(df_details["date_str"].unique().tolist()))
+
+    daily_chart = mo.iframe(f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <script src="https://d3js.org/d3.v7.min.js"></script>
+        <style>
+            body {{ margin: 0; font-family: sans-serif; }}
+            .tooltip {{
+                position: absolute;
+                background: white;
+                border: 1px solid #ccc;
+                border-radius: 6px;
+                padding: 8px 12px;
+                font-size: 12px;
+                pointer-events: none;
+                box-shadow: 2px 2px 6px rgba(0,0,0,0.15);
+                display: none;
+                max-width: 300px;
+            }}
+        </style>
+    </head>
+    <body>
+    <div id="chart"></div>
+    <div class="tooltip" id="tooltip"></div>
+    <script>
+    try {{
+        var data = {details_json};
+        var dates = {unique_dates_list};
+
+        var typeColors = {{
+            "Person": "#7B68EE",
+            "Organization": "#DC143C",
+            "Vessel": "#00CED1",
+            "Group": "#FF8C00",
+            "Location": "#4169E1"
+        }};
+
+        var margin = {{top: 50, right: 30, bottom: 80, left: 80}};
+        var rowHeight = 80;
+        var summaryHeight = 80;
+        var width = 1000 - margin.left - margin.right;
+        var height = dates.length * rowHeight;
+        var totalHeight = height + summaryHeight;
+        var dotSize = 10;
+        var dotGap = 2;
+        var maxCols = 8;
+
+        var svg = d3.select("#chart")
+            .append("svg")
+            .attr("width", width + margin.left + margin.right)
+            .attr("height", totalHeight + margin.top + margin.bottom)
+            .append("g")
+            .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+        var x = d3.scaleLinear()
+            .domain([8, 16])
+            .range([0, width]);
+
+        var y = d3.scaleBand()
+            .domain(dates)
+            .range([0, height])
+            .padding(0.1);
+
+        var tickVals = [8,9,10,11,12,13,14,15];
+
+        // X axis top
+        svg.append("g")
+            .call(d3.axisTop(x)
+                .tickValues(tickVals)
+                .tickFormat(function(d) {{ return d + ":00"; }}))
+            .selectAll("text")
+            .style("font-size", "11px");
+
+        // Vertical grid lines
+        tickVals.forEach(function(h) {{
+            svg.append("line")
+                .attr("x1", x(h)).attr("x2", x(h))
+                .attr("y1", 0).attr("y2", totalHeight)
+                .attr("stroke", "#eee").attr("stroke-width", 1);
+        }});
+
+        // Row backgrounds and day labels
+        dates.forEach(function(date, i) {{
+            svg.append("rect")
+                .attr("x", 0).attr("y", y(date))
+                .attr("width", width).attr("height", y.bandwidth())
+                .attr("fill", i % 2 === 0 ? "#f9f9f9" : "#ffffff")
+                .attr("stroke", "#eee");
+
+            svg.append("text")
+                .attr("x", -10)
+                .attr("y", y(date) + y.bandwidth() / 2)
+                .attr("text-anchor", "end")
+                .attr("dominant-baseline", "middle")
+                .style("font-size", "12px")
+                .style("font-weight", "bold")
+                .text(i + 1);
+        }});
+
+        // Per-day density
+        dates.forEach(function(date) {{
+            var dayData = data.filter(function(d) {{ return d.date_str === date; }});
+            if (dayData.length === 0) return;
+
+            var values = dayData.map(function(d) {{ return d.hour_float; }});
+            var bins = d3.bin().domain([8, 15.5]).thresholds(25)(values);
+            var maxCount = d3.max(bins, function(b) {{ return b.length; }});
+
+            var areaY = d3.scaleLinear()
+                .domain([0, maxCount || 1])
+                .range([y(date) + y.bandwidth(), y(date) + y.bandwidth() * 0.2]);
+
+            var area = d3.area()
+                .x(function(b) {{ return x((b.x0 + b.x1) / 2); }})
+                .y0(y(date) + y.bandwidth())
+                .y1(function(b) {{ return areaY(b.length); }})
+                .curve(d3.curveBasis);
+
+            svg.append("path")
+                .datum(bins)
+                .attr("d", area)
+                .attr("fill", "#5B9BD5")
+                .attr("opacity", 0.15);
+        }});
+
+        // Group by date + hour
+        var grouped = {{}};
+        data.forEach(function(d) {{
+            var hour = Math.floor(d.hour_float);
+            var key = d.date_str + "|" + hour;
+            if (!grouped[key]) grouped[key] = [];
+            grouped[key].push(d);
+        }});
+
+        var tooltip = d3.select("#tooltip");
+
+        // Draw split dots per bin
+        Object.keys(grouped).forEach(function(key) {{
+            var parts = key.split("|");
+            var date = parts[0];
+            var hour = parseInt(parts[1]);
+            var items = grouped[key];
+
+            var binLeft = x(hour) + 5;
+            var rowTop = y(date);
+            var bandHeight = y.bandwidth();
+
+            items.forEach(function(d, idx) {{
+                var col = idx % maxCols;
+                var row = Math.floor(idx / maxCols);
+
+                var px = binLeft + col * (dotSize + dotGap);
+                var py = rowTop + row * (dotSize + dotGap);
+
+                var g = svg.append("g")
+                    .style("cursor", "pointer")
+                    .on("mouseover", function(event) {{
+                        d3.select(this).select(".outline").attr("stroke", "#333").attr("stroke-width", 2);
+                        tooltip.style("display", "block")
+                            .html("<strong>" + d.sender_name + " → " + d.receiver_name + "</strong><br/>"
+                                + d.timestamp + "<br/>"
+                                + "<span style='color:" + (typeColors[d.sender_type]||"#999") + "'>■</span> "
+                                + d.sender_type + " → "
+                                + "<span style='color:" + (typeColors[d.receiver_type]||"#999") + "'>■</span> "
+                                + d.receiver_type)
+                            .style("left", (event.pageX + 12) + "px")
+                            .style("top", (event.pageY - 20) + "px");
+                    }})
+                    .on("mouseout", function() {{
+                        d3.select(this).select(".outline").attr("stroke", "none");
+                        tooltip.style("display", "none");
+                    }});
+
+                g.append("rect")
+                    .attr("x", px).attr("y", py)
+                    .attr("width", dotSize / 2).attr("height", dotSize)
+                    .attr("fill", typeColors[d.sender_type] || "#999");
+
+                g.append("rect")
+                    .attr("x", px + dotSize / 2).attr("y", py)
+                    .attr("width", dotSize / 2).attr("height", dotSize)
+                    .attr("fill", typeColors[d.receiver_type] || "#999");
+
+                g.append("rect")
+                    .attr("class", "outline")
+                    .attr("x", px).attr("y", py)
+                    .attr("width", dotSize).attr("height", dotSize)
+                    .attr("fill", "none").attr("rx", 1);
+            }});
+        }});
+
+        // === Summary density at bottom ===
+        var summaryTop = height + 10;
+
+        // Background
+        svg.append("rect")
+            .attr("x", 0).attr("y", summaryTop)
+            .attr("width", width).attr("height", summaryHeight)
+            .attr("fill", "#f0f0f0")
+            .attr("stroke", "#ddd");
+
+        // Label
+        svg.append("text")
+            .attr("x", -10)
+            .attr("y", summaryTop + summaryHeight / 2)
+            .attr("text-anchor", "end")
+            .attr("dominant-baseline", "middle")
+            .style("font-size", "11px")
+            .style("font-weight", "bold")
+            .text("All");
+
+        // Overall density
+        var allValues = data.map(function(d) {{ return d.hour_float; }});
+        var allBins = d3.bin().domain([8, 15.5]).thresholds(40)(allValues);
+        var allMax = d3.max(allBins, function(b) {{ return b.length; }});
+
+        var summaryY = d3.scaleLinear()
+            .domain([0, allMax || 1])
+            .range([summaryTop + summaryHeight, summaryTop + 10]);
+
+        var summaryArea = d3.area()
+            .x(function(b) {{ return x((b.x0 + b.x1) / 2); }})
+            .y0(summaryTop + summaryHeight)
+            .y1(function(b) {{ return summaryY(b.length); }})
+            .curve(d3.curveBasis);
+
+        svg.append("path")
+            .datum(allBins)
+            .attr("d", summaryArea)
+            .attr("fill", "#5B9BD5")
+            .attr("opacity", 0.35);
+
+        // Summary line on top of area
+        var summaryLine = d3.line()
+            .x(function(b) {{ return x((b.x0 + b.x1) / 2); }})
+            .y(function(b) {{ return summaryY(b.length); }})
+            .curve(d3.curveBasis);
+
+        svg.append("path")
+            .datum(allBins)
+            .attr("d", summaryLine)
+            .attr("fill", "none")
+            .attr("stroke", "#5B9BD5")
+            .attr("stroke-width", 2);
+
+        // === Bottom X axis ===
+        svg.append("g")
+            .attr("transform", "translate(0," + (summaryTop + summaryHeight) + ")")
+            .call(d3.axisBottom(x)
+                .tickValues(tickVals)
+                .tickFormat(function(d) {{ return d + ":00"; }}))
+            .selectAll("text")
+            .style("font-size", "11px");
+
+        // Legend
+        var legendData = Object.entries(typeColors);
+        var legend = svg.append("g")
+            .attr("transform", "translate(0," + (summaryTop + summaryHeight + 30) + ")");
+
+        legendData.forEach(function(entry, i) {{
+            legend.append("rect")
+                .attr("x", i * 130).attr("y", 0)
+                .attr("width", 12).attr("height", 12)
+                .attr("fill", entry[1]).attr("rx", 2);
+            legend.append("text")
+                .attr("x", i * 130 + 18).attr("y", 10)
+                .text(entry[0]).style("font-size", "11px");
+        }});
+
+    }} catch(e) {{
+        document.getElementById("chart").innerHTML = "<pre style='color:red'>" + e.message + "\\n" + e.stack + "</pre>";
+    }}
+    </script>
+    </body>
+    </html>
+    """, width="100%", height=f"{(len(sorted(df_details['date_str'].unique().tolist())) * 80) + 280}px")
+    daily_chart
+    return
+
+
+@app.cell
+def _(df_details, json_lib):
+    # Get all entities involved in communications with their types
+    entity_types = {}
+    for _, row in df_details.iterrows():
+        entity_types[row["sender_name"]] = row["sender_type"]
+        entity_types[row["receiver_name"]] = row["receiver_type"]
+
+    # Arrange entities in a circle
+    import math
+    entity_names = sorted(entity_types.keys())
+    num_entities = len(entity_names)
+    circle_nodes = []
+    for i, name in enumerate(entity_names):
+        angle = (2 * math.pi * i / num_entities) - math.pi / 2
+        circle_nodes.append({
+            "id": name,
+            "type": entity_types[name],
+            "x": math.cos(angle),
+            "y": math.sin(angle),
+        })
+
+    # Build edges per day per hour
+    day_hour_edges = {}
+    for _, row in df_details.iterrows():
+        date_s = row["date_str"]
+        hr = int(row["hour_float"])
+        key = date_s + "|" + str(hr)
+        if key not in day_hour_edges:
+            day_hour_edges[key] = []
+        day_hour_edges[key].append({
+            "source": row["sender_name"],
+            "target": row["receiver_name"],
+        })
+
+    # Aggregate: count per source-target per day-hour
+    from collections import Counter as Ctr
+    day_hour_agg = {}
+    for key, edge_list in day_hour_edges.items():
+        counts = Ctr()
+        for e in edge_list:
+            counts[(e["source"], e["target"])] += 1
+        day_hour_agg[key] = [
+            {"source": s, "target": t, "weight": w}
+            for (s, t), w in counts.items()
+        ]
+
+    circle_json = json_lib.dumps(circle_nodes)
+    day_hour_json = json_lib.dumps(day_hour_agg)
+    dates_list_json = json_lib.dumps(sorted(df_details["date_str"].unique().tolist()))
+    return circle_json, day_hour_json
+
+
+@app.cell
+def _(df_details, mo):
+    day_slider_sm = mo.ui.slider(
+        start=0,
+        stop=len(sorted(df_details["date_str"].unique().tolist())) - 1,
+        step=1,
+        value=0,
+        label="Day",
+        full_width=True,
+        show_value=True
+    )
+    day_slider_sm
+    return (day_slider_sm,)
+
+
+@app.cell
+def _(circle_json, day_hour_json, day_slider_sm, df_details, mo):
+    sm_dates = sorted(df_details["date_str"].unique().tolist())
+    selected_day_sm = sm_dates[day_slider_sm.value]
+
+    circle_multiples = mo.iframe(f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <script src="https://d3js.org/d3.v7.min.js"></script>
+        <style>
+            body {{ margin: 0; font-family: sans-serif; }}
+            .tooltip {{
+                position: absolute;
+                background: white;
+                border: 1px solid #ccc;
+                border-radius: 6px;
+                padding: 8px 12px;
+                font-size: 12px;
+                pointer-events: none;
+                box-shadow: 2px 2px 6px rgba(0,0,0,0.15);
+                display: none;
+                max-width: 250px;
+                z-index: 100;
+            }}
+            .entity-node {{
+                cursor: pointer;
+            }}
+            .entity-node:hover circle {{
+                stroke-width: 3;
+            }}
+        </style>
+    </head>
+    <body>
+    <div id="chart"></div>
+    <div class="tooltip" id="tooltip"></div>
+    <script>
+    try {{
+        var nodes = {circle_json};
+        var dayHourEdges = {day_hour_json};
+        var selectedDay = "{selected_day_sm}";
+        var hours = [8,9,10,11,12,13,14];
+
+        var typeColors = {{
+            "Person": "#4169E1",
+            "Organization": "#DC143C",
+            "Vessel": "#FF8C00",
+            "Group": "#9932CC",
+            "Location": "#2E8B57"
+        }};
+
+        var cols = 4;
+        var cellSize = 300;
+        var pad = 15;
+        var rowCount = Math.ceil(hours.length / cols);
+        var margin = {{top: 60, right: 20, bottom: 60, left: 20}};
+        var totalW = cols * (cellSize + pad) + margin.left + margin.right;
+        var totalH = rowCount * (cellSize + pad) + margin.top + margin.bottom;
+        var radius = cellSize / 2 - 40;
+
+        var nodeMap = new Map(nodes.map(function(n) {{ return [n.id, n]; }}));
+
+        var svg = d3.select("#chart")
+            .append("svg")
+            .attr("width", totalW)
+            .attr("height", totalH);
+
+        var tooltip = d3.select("#tooltip");
+
+        // Track selected entity
+        var selectedEntity = null;
+
+        // Title
+        svg.append("text")
+            .attr("x", totalW / 2)
+            .attr("y", 25)
+            .attr("text-anchor", "middle")
+            .style("font-size", "16px")
+            .style("font-weight", "bold")
+            .text("Communication Networks — Day " + (parseInt("{day_slider_sm.value}") + 1) + " (" + selectedDay + ")");
+
+        // Store references for filtering
+        var allEdgePaths = [];
+        var allNodeGroups = [];
+        var allLabels = [];
+
+        hours.forEach(function(hr, i) {{
+            var col = i % cols;
+            var row = Math.floor(i / cols);
+            var ox = margin.left + col * (cellSize + pad) + cellSize / 2;
+            var oy = margin.top + row * (cellSize + pad) + cellSize / 2;
+
+            var g = svg.append("g")
+                .attr("transform", "translate(" + ox + "," + oy + ")");
+
+            // Cell background
+            g.append("circle")
+                .attr("r", radius + 25)
+                .attr("fill", "#fafafa")
+                .attr("stroke", "#ddd");
+
+            // Hour label
+            g.append("text")
+                .attr("y", -radius - 12)
+                .attr("text-anchor", "middle")
+                .style("font-size", "13px")
+                .style("font-weight", "bold")
+                .text(hr + ":00");
+
+            // Get edges for this day+hour
+            var key = selectedDay + "|" + hr;
+            var edges = dayHourEdges[key] || [];
+
+            var activeNodes = new Set();
+            edges.forEach(function(e) {{
+                activeNodes.add(e.source);
+                activeNodes.add(e.target);
+            }});
+
+            var edgeSet = new Set(edges.map(function(e) {{ return e.source + "|" + e.target; }}));
+            var maxW = d3.max(edges, function(e) {{ return e.weight; }}) || 1;
+
+            // Arrow marker
+            g.append("defs").append("marker")
+                .attr("id", "arr-" + hr)
+                .attr("viewBox", "0 0 10 10")
+                .attr("refX", 12)
+                .attr("refY", 5)
+                .attr("markerWidth", 5)
+                .attr("markerHeight", 5)
+                .attr("orient", "auto")
+                .append("path")
+                .attr("d", "M 0 0 L 10 5 L 0 10 Z")
+                .attr("fill", "#888");
+
+            // Draw edges
+            edges.forEach(function(e) {{
+                var src = nodeMap.get(e.source);
+                var tgt = nodeMap.get(e.target);
+                if (!src || !tgt) return;
+
+                var x1 = src.x * radius;
+                var y1 = src.y * radius;
+                var x2 = tgt.x * radius;
+                var y2 = tgt.y * radius;
+
+                var dx = x2 - x1;
+                var dy = y2 - y1;
+                var dist = Math.sqrt(dx * dx + dy * dy) || 1;
+                var hasBidi = edgeSet.has(e.target + "|" + e.source);
+                var offset = hasBidi ? 20 : 0;
+                var mx = (x1 + x2) / 2 + (-dy / dist) * offset;
+                var my = (y1 + y2) / 2 + (dx / dist) * offset;
+
+                var strokeW = Math.max(0.5, (e.weight / maxW) * 3);
+
+                var path = g.append("path")
+                    .attr("d", "M" + x1 + "," + y1 + " Q" + mx + "," + my + " " + x2 + "," + y2)
+                    .attr("fill", "none")
+                    .attr("stroke", "#999")
+                    .attr("stroke-width", strokeW)
+                    .attr("opacity", 0.4)
+                    .attr("marker-end", "url(#arr-" + hr + ")")
+                    .attr("data-source", e.source)
+                    .attr("data-target", e.target);
+
+                allEdgePaths.push(path);
+            }});
+
+            // Draw nodes
+            nodes.forEach(function(n) {{
+                var isActive = activeNodes.has(n.id);
+                var nx = n.x * radius;
+                var ny = n.y * radius;
+
+                var ng = g.append("g")
+                    .attr("class", "entity-node")
+                    .attr("transform", "translate(" + nx + "," + ny + ")")
+                    .attr("data-entity", n.id)
+                    .attr("data-hour", hr);
+
+                ng.append("circle")
+                    .attr("r", isActive ? 7 : 4)
+                    .attr("fill", typeColors[n.type] || "#999")
+                    .attr("stroke", "#333")
+                    .attr("stroke-width", isActive ? 1.5 : 0.5)
+                    .attr("opacity", isActive ? 1 : 0.25);
+
+                allNodeGroups.push({{group: ng, id: n.id, hour: hr, active: isActive}});
+
+                // Label for active nodes
+                if (isActive) {{
+                    var angle = Math.atan2(n.y, n.x);
+                    var lx = Math.cos(angle) * 18;
+                    var ly = Math.sin(angle) * 18;
+                    var anchor = (angle > Math.PI / 2 || angle < -Math.PI / 2) ? "end" : "start";
+
+                    var label = g.append("text")
+                        .attr("x", nx + lx)
+                        .attr("y", ny + ly)
+                        .attr("text-anchor", anchor)
+                        .attr("dominant-baseline", "middle")
+                        .style("font-size", "7px")
+                        .style("fill", "#333")
+                        .attr("data-entity", n.id)
+                        .text(n.id.length > 12 ? n.id.substring(0, 12) + "..." : n.id);
+
+                    allLabels.push(label);
+                }}
+            }});
+
+            // Message count
+            var totalMsgs = edges.reduce(function(sum, e) {{ return sum + e.weight; }}, 0);
+            g.append("text")
+                .attr("y", radius + 18)
+                .attr("text-anchor", "middle")
+                .style("font-size", "10px")
+                .style("fill", "#888")
+                .text(totalMsgs + " messages");
+        }});
+
+        // Click handler on all entity nodes
+        svg.selectAll(".entity-node").on("click", function(event) {{
+            var clickedEntity = d3.select(this).attr("data-entity");
+
+            if (selectedEntity === clickedEntity) {{
+                // Deselect: reset everything
+                selectedEntity = null;
+                allEdgePaths.forEach(function(p) {{
+                    p.attr("opacity", 0.4).attr("stroke", "#999");
+                }});
+                svg.selectAll(".entity-node circle")
+                    .attr("opacity", function() {{
+                        return 0.6;
+                    }});
+            }} else {{
+                selectedEntity = clickedEntity;
+
+                // Dim all edges
+                allEdgePaths.forEach(function(p) {{
+                    var src = p.attr("data-source");
+                    var tgt = p.attr("data-target");
+                    if (src === clickedEntity || tgt === clickedEntity) {{
+                        p.attr("opacity", 0.8).attr("stroke", "#ff5555").attr("stroke-width", 2.5);
+                    }} else {{
+                        p.attr("opacity", 0.05).attr("stroke", "#ccc");
+                    }}
+                }});
+
+                // Dim nodes not connected
+                svg.selectAll(".entity-node circle")
+                    .attr("opacity", 0.15);
+
+                // Highlight clicked entity nodes
+                svg.selectAll(".entity-node")
+                    .filter(function() {{ return d3.select(this).attr("data-entity") === clickedEntity; }})
+                    .select("circle")
+                    .attr("opacity", 1)
+                    .attr("stroke-width", 3)
+                    .attr("stroke", "#ff5555");
+
+                // Also highlight connected entities
+                allEdgePaths.forEach(function(p) {{
+                    var src = p.attr("data-source");
+                    var tgt = p.attr("data-target");
+                    if (src === clickedEntity) {{
+                        svg.selectAll(".entity-node")
+                            .filter(function() {{ return d3.select(this).attr("data-entity") === tgt; }})
+                            .select("circle").attr("opacity", 0.8);
+                    }}
+                    if (tgt === clickedEntity) {{
+                        svg.selectAll(".entity-node")
+                            .filter(function() {{ return d3.select(this).attr("data-entity") === src; }})
+                            .select("circle").attr("opacity", 0.8);
+                    }}
+                }});
+            }}
+        }});
+
+        // Hover tooltip on nodes
+        svg.selectAll(".entity-node")
+            .on("mouseover", function(event) {{
+                var ent = d3.select(this).attr("data-entity");
+                tooltip.style("display", "block")
+                    .html("<strong>" + ent + "</strong><br/>" + (nodeMap.get(ent).type))
+                    .style("left", (event.pageX + 12) + "px")
+                    .style("top", (event.pageY - 20) + "px");
+            }})
+            .on("mouseout", function() {{
+                tooltip.style("display", "none");
+            }});
+
+        // Legend
+        var legendG = svg.append("g")
+            .attr("transform", "translate(" + margin.left + "," + (totalH - 40) + ")");
+
+        var legendItems = Object.entries(typeColors);
+        legendItems.forEach(function(entry, i) {{
+            legendG.append("circle")
+                .attr("cx", i * 130 + 8)
+                .attr("cy", 0)
+                .attr("r", 6)
+                .attr("fill", entry[1]);
+            legendG.append("text")
+                .attr("x", i * 130 + 20)
+                .attr("y", 4)
+                .text(entry[0])
+                .style("font-size", "11px");
+        }});
+
+        // Click instruction
+        legendG.append("text")
+            .attr("x", totalW - margin.right - margin.left - 20)
+            .attr("y", 4)
+            .attr("text-anchor", "end")
+            .style("font-size", "10px")
+            .style("fill", "#888")
+            .text("Click an entity to filter. Click again to reset.");
+
+    }} catch(e) {{
+        document.getElementById("chart").innerHTML = "<pre style='color:red'>" + e.message + "\\n" + e.stack + "</pre>";
+    }}
+    </script>
+    </body>
+    </html>
+    """, width="100%", height="720px")
+
+    mo.vstack([
+        circle_multiples,
+        mo.md(f"**Day {day_slider_sm.value + 1}** — {selected_day_sm}"),
+        day_slider_sm
+    ])
+    return
+
+
+@app.cell
+def _():
     return
 
 
