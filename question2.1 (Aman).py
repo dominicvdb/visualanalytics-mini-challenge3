@@ -77,7 +77,7 @@ def _():
     import plotly.graph_objects as go
     from plotly.subplots import make_subplots
     import networkx as nx
-    return defaultdict, go, json, mo, nx
+    return Counter, defaultdict, go, json, mo, np, nx
 
 
 @app.cell(hide_code=True)
@@ -229,14 +229,14 @@ def _(defaultdict, entity_ids, graph_data):
                     })
 
     print(f"Extracted {len(comm_events)} communications and {len(relationship_data)} relationships")
-    return (comm_matrix,)
+    return comm_matrix, relationship_data
 
 
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
     ## **2. Communication Network**
-    In this visualization, I will show the ***communication flow*** between all entities *(persons, vessels and organizations),* in other words **who talks to whom and how often**.
+    In this visualization, I will show the ***communication flow*** between all entities *(persons, vessels and organizations),* in other words **who talks to whom and how often**. The edge thickness shows the ***communication frequency.***
     """)
     return
 
@@ -434,6 +434,318 @@ def _(
 
     # Show the Communication Network Graph
     fig_comm_network
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    ## **3 Relationship Frequency Matrix (Heatmap)**
+
+    This heatmap provides quite a detailed overview of the the ***communication intesity*** between the entities, the darker blue the cells are the more frequent the communication is.
+    """)
+    return
+
+
+@app.cell
+def _(mo):
+    # I have added the Entity selection interaction filter for heatmap
+    heatmap_type_filter = mo.ui.multiselect(
+        options=['Person', 'Vessel', 'Organization'],
+        value=['Person', 'Vessel'],
+        label="Include Entity Types in Heatmap:"
+    )
+    heatmap_type_filter
+    return (heatmap_type_filter,)
+
+
+@app.cell
+def _(all_entities, comm_matrix, go, heatmap_type_filter, np):
+    # In here I create the communication count matrix for heatmap
+    def build_heatmap_data(entity_types):
+        # At first I Filter the entities
+        filtered = [eid for eid, e in all_entities.items() 
+                   if e.get('sub_type') in entity_types]
+
+        # Then I sort them by entity type and then by name
+        filtered = sorted(filtered, key=lambda x: (all_entities[x].get('sub_type', ''), x))
+
+        # At last I build the matrix
+        n = len(filtered)
+        matrix = np.zeros((n, n))
+
+        for i, sender in enumerate(filtered):
+            for j, receiver in enumerate(filtered):
+                if sender in comm_matrix and receiver in comm_matrix[sender]:
+                    matrix[i][j] = len(comm_matrix[sender][receiver])
+
+        return filtered, matrix
+
+    entities_hm, matrix_hm = build_heatmap_data(heatmap_type_filter.value)
+
+    # After that I create the labels with entity type indicators
+    labels_hm = []
+    for eid in entities_hm:
+        etype = all_entities[eid].get('sub_type', '?')[0]  # This is for the First letter
+        labels_hm.append(f"[{etype}] {eid}")
+
+    fig_heatmap = go.Figure(data=go.Heatmap(
+        z=matrix_hm,
+        x=labels_hm,
+        y=labels_hm,
+        colorscale='Blues',
+        hoverongaps=False,
+        hovertemplate='<b>%{y}</b> → <b>%{x}</b><br>Messages: %{z}<extra></extra>'
+    ))
+
+    fig_heatmap.update_layout(
+        title=dict(
+            text='<b>Communication Frequency Matrix</b><br><sup>Row = Sender, Column = Receiver. [P]=Person, [V]=Vessel, [O]=Organization</sup>',
+            x=0.5
+        ),
+        xaxis=dict(title='Receiver', tickangle=45, tickfont=dict(size=8)),
+        yaxis=dict(title='Sender', tickfont=dict(size=8)),
+        height=800,
+        width=900,
+        margin=dict(l=150, r=50, t=100, b=150)
+    )
+
+    # Display the frequency heatmap matrix
+    fig_heatmap
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    ## **4. Formal Relationship Network** - TODO
+
+    Except of the communications, entities also ahve ***formal relationships*** such as Colleagues, Operates, Report, Coordinates, etc and this network will display those structural connections and relationships.
+    """)
+    return
+
+
+@app.cell
+def _(mo):
+    # I added the filter with all the relationship options
+    rel_type_filter = mo.ui.multiselect(
+        options=['Colleagues', 'Operates', 'Reports', 'Coordinates', 'Suspicious', 'Friends', 'Unfriendly', 'Jurisdiction', 'AccessPermission'],
+        value=['Colleagues', 'Operates', 'Reports', 'Suspicious'],
+        label="Show Relationship Types:"
+    )
+    rel_type_filter
+    return (rel_type_filter,)
+
+
+@app.cell
+def _(
+    Counter,
+    all_entities,
+    go,
+    nodes_by_id,
+    nx,
+    rel_type_filter,
+    relationship_data,
+):
+    # Build relationship network
+    def build_rel_network(rel_types):
+        G = nx.Graph()  # Undirected for visualization
+
+        # Filter relationships
+        filtered_rels = [r for r in relationship_data if r['type'] in rel_types]
+
+        # Count relationship types between entity pairs
+        edge_rels = Counter()
+        for rel in filtered_rels:
+            e1, e2 = rel['entity1'], rel['entity2']
+            if e1 in all_entities and e2 in all_entities:
+                key = tuple(sorted([e1, e2]))
+                edge_rels[(key, rel['type'])] += 1
+
+        # Add nodes and edges
+        for (key, rel_type), count in edge_rels.items():
+            e1, e2 = key
+            G.add_node(e1, sub_type=all_entities[e1].get('sub_type'))
+            G.add_node(e2, sub_type=all_entities[e2].get('sub_type'))
+
+            if G.has_edge(e1, e2):
+                G[e1][e2]['types'].append(rel_type)
+            else:
+                G.add_edge(e1, e2, types=[rel_type])
+
+        return G
+
+    G_rel = build_rel_network(rel_type_filter.value)
+
+    # Layout
+    if len(G_rel.nodes()) > 0:
+        pos_rel = nx.spring_layout(G_rel, k=3, iterations=50, seed=42)
+    else:
+        pos_rel = {}
+
+    # Color map for relationship types
+    rel_color_map = {
+        'Colleagues': '#2ECC71',     # Green
+        'Operates': '#3498DB',       # Blue
+        'Reports': '#9B59B6',        # Purple
+        'Coordinates': '#F39C12',    # Orange
+        'Suspicious': '#E74C3C',     # Red
+        'Friends': '#1ABC9C',        # Teal
+        'Unfriendly': '#C0392B',     # Dark red
+        'Jurisdiction': '#34495E',   # Dark gray
+        'AccessPermission': '#7F8C8D' # Gray
+    }
+
+    # Node type color map
+    node_color_map = {
+        'Person': '#4ECDC4',
+        'Vessel': '#FF6B6B',
+        'Organization': '#95E1D3',
+        'Group': '#F38181'
+    }
+
+    # Create edge traces for each relationship type
+    rel_edge_traces = []
+    for rel_type in rel_type_filter.value:
+        x_edges, y_edges = [], []
+        for u, v, data in G_rel.edges(data=True):
+            if rel_type in data['types']:
+                x0, y0 = pos_rel[u]
+                x1, y1 = pos_rel[v]
+                x_edges.extend([x0, x1, None])
+                y_edges.extend([y0, y1, None])
+
+        if x_edges:
+            trace = go.Scatter(
+                x=x_edges, y=y_edges,
+                mode='lines',
+                line=dict(width=2, color=rel_color_map.get(rel_type, 'gray')),
+                name=rel_type,
+                hoverinfo='none'
+            )
+            rel_edge_traces.append(trace)
+
+    # Node traces
+    rel_node_traces = []
+    for ntype in ['Person', 'Vessel', 'Organization', 'Group']:
+        nodes_of_type = [n for n in G_rel.nodes() 
+                        if nodes_by_id.get(n, {}).get('sub_type') == ntype]
+        if not nodes_of_type:
+            continue
+
+        x_vals = [pos_rel[n][0] for n in nodes_of_type]
+        y_vals = [pos_rel[n][1] for n in nodes_of_type]
+
+        # Hover text with relationship info
+        hover_texts = []
+        for n in nodes_of_type:
+            neighbors = list(G_rel.neighbors(n))
+            rel_summary = []
+            for nb in neighbors:
+                types = G_rel[n][nb]['types']
+                rel_summary.append(f"  • {nb}: {', '.join(types)}")
+            hover_text = f"<b>{n}</b> ({ntype})<br>Relationships:<br>" + "<br>".join(rel_summary[:10])
+            if len(rel_summary) > 10:
+                hover_text += f"<br>  ...and {len(rel_summary)-10} more"
+            hover_texts.append(hover_text)
+
+        trace = go.Scatter(
+            x=x_vals, y=y_vals,
+            mode='markers+text',
+            marker=dict(
+                size=20,
+                color=node_color_map[ntype],
+                line=dict(width=2, color='white')
+            ),
+            text=nodes_of_type,
+            textposition='top center',
+            textfont=dict(size=9),
+            hoverinfo='text',
+            hovertext=hover_texts,
+            name=f'{ntype}s',
+            legendgroup='nodes'
+        )
+        rel_node_traces.append(trace)
+
+    fig_rel_network = go.Figure(data=rel_edge_traces + rel_node_traces)
+
+    fig_rel_network.update_layout(
+        title=dict(
+            text='<b>Formal Relationship Network</b><br><sup>Structural connections between entities (colored by relationship type)</sup>',
+            x=0.5
+        ),
+        showlegend=True,
+        legend=dict(yanchor="top", y=0.99, xanchor="left", x=0.01),
+        xaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
+        yaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
+        height=700,
+        plot_bgcolor='#fafafa',
+        margin=dict(l=20, r=20, t=80, b=20)
+    )
+
+    fig_rel_network
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    ## **5. Individual Communication Profiles (Entity Dive Deep)**
+    """)
+    return
+
+
+@app.cell
+def _(all_entities, mo):
+    entity_selector = mo.ui.dropdown(
+        options=sorted(all_entities.keys()),
+        value='Nadia Conti',
+        label="Select Entity to Analyze:"
+    )
+    entity_selector
+    return
+
+
+@app.cell
+def _(mo):
+    mo.md(r"""
+    ## **6. Communication Timeline**
+    """)
+    return
+
+
+@app.cell
+def _():
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    ## **7. Key Statistics**
+    """)
+    return
+
+
+@app.cell
+def _():
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    ## **Findings for Question 2.1**
+
+    Based on the visual analytics executed above, several insights emerge about the interaction and relationships.
+    1.
+    2.
+    3.
+    4.
+    5.
+
+    (Continue with 2.2 For Community detection and topic analysis)
+    """)
     return
 
 
