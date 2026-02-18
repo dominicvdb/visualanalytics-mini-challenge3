@@ -175,22 +175,22 @@ def _(defaultdict, entity_ids, graph_data):
     comm_matrix = defaultdict(lambda: defaultdict(list))  # This store the actual communications
 
     for comm in comm_events:
-        comm_id = comm['id']
-        timestamp = comm.get('timestamp', '')
-        content = comm.get('content', '')
+        _comm_id = comm['id']
+        _timestamp = comm.get('timestamp', '')
+        _content = comm.get('content', '')
 
         # In here I find the senders (edges TO communication with type 'sent')
-        senders = [e['source'] for e in edges_to[comm_id] if e.get('type') == 'sent']
+        _senders = [e['source'] for e in edges_to[_comm_id] if e.get('type') == 'sent']
         # and In here I find receivers (edges FROM communication with type 'received')
-        receivers = [e['target'] for e in edges_from[comm_id] if e.get('type') == 'received']
+        _receivers = [e['target'] for e in edges_from[_comm_id] if e.get('type') == 'received']
 
-        for sender in senders:
-            for receiver in receivers:
-                if sender in entity_ids or receiver in entity_ids:
-                    comm_matrix[sender][receiver].append({
-                        'timestamp': timestamp,
-                        'content': content,
-                        'comm_id': comm_id
+        for _sender in _senders:
+            for _receiver in _receivers:
+                if _sender in entity_ids or _receiver in entity_ids:
+                    comm_matrix[_sender][_receiver].append({
+                        'timestamp': _timestamp,
+                        'content': _content,
+                        'comm_id': _comm_id
                     })
 
     # After all that, I extracted all the Relationship nodes
@@ -198,34 +198,34 @@ def _(defaultdict, entity_ids, graph_data):
 
     # Then build the relationship data structure
     relationship_data = []
-    for rel in relationships:
-        rel_id = rel['id']
-        rel_type = rel['sub_type']
+    for _rel in relationships:
+        _rel_id = _rel['id']
+        _rel_type = _rel['sub_type']
 
         # I have got the connected entities
-        sources = [e['source'] for e in edges_to[rel_id] if e['source'] in entity_ids]
-        targets = [e['target'] for e in edges_from[rel_id] if e['target'] in entity_ids]
+        _sources = [e['source'] for e in edges_to[_rel_id] if e['source'] in entity_ids]
+        _targets = [e['target'] for e in edges_from[_rel_id] if e['target'] in entity_ids]
 
         # and for bidirectional relationships such as (Colleagues, Friends), both parties are my sources
-        if rel_type in ['Colleagues', 'Friends']:
-            if len(sources) >= 2:
+        if _rel_type in ['Colleagues', 'Friends']:
+            if len(_sources) >= 2:
                 relationship_data.append({
-                    'type': rel_type,
-                    'entity1': sources[0],
-                    'entity2': sources[1],
+                    'type': _rel_type,
+                    'entity1': _sources[0],
+                    'entity2': _sources[1],
                     'bidirectional': True,
-                    'rel_id': rel_id
+                    'rel_id': _rel_id
                 })
         else:
             # These are the directional relationships
-            for s in sources:
-                for t in targets:
+            for _s in _sources:
+                for _t in _targets:
                     relationship_data.append({
-                        'type': rel_type,
-                        'entity1': s,
-                        'entity2': t,
+                        'type': _rel_type,
+                        'entity1': _s,
+                        'entity2': _t,
                         'bidirectional': False,
-                        'rel_id': rel_id
+                        'rel_id': _rel_id
                     })
 
     print(f"Extracted {len(comm_events)} communications and {len(relationship_data)} relationships")
@@ -343,7 +343,7 @@ def _(
 
     # I have integrated the Plotly figure (for interaction)
     # Then I have manually added color mapping for entity types
-    color_map = {
+    _color_map = {
         'Person': '#4ECDC4',       # Teal
         'Vessel': '#FF6B6B',       # Coral red
         'Organization': '#95E1D3', # Mint
@@ -351,67 +351,67 @@ def _(
     }
 
     # In here I have the edge traces
-    edge_traces = []
-    for (u, v), weight in edge_weights_comm.items():
-        x0, y0 = pos_comm[u]
-        x1, y1 = pos_comm[v]
+    _edge_traces = []
+    for (_u, _v), _weight in edge_weights_comm.items():
+        _x0, _y0 = pos_comm[_u]
+        _x1, _y1 = pos_comm[_v]
 
-        edge_trace = go.Scatter(
-            x=[x0, x1, None],
-            y=[y0, y1, None],
+        _edge_trace = go.Scatter(
+            x=[_x0, _x1, None],
+            y=[_y0, _y1, None],
             mode='lines',
             line=dict(
-                width=min(weight / 2, 8),
+                width=min(_weight / 2, 8),
                 color='rgba(150, 150, 150, 0.4)'
             ),
             hoverinfo='text',
-            text=f"{u} → {v}: {weight} messages",
+            text=f"{_u} → {_v}: {_weight} messages",
             showlegend=False
         )
-        edge_traces.append(edge_trace)
+        _edge_traces.append(_edge_trace)
 
     # In here I have the node traces (grouped by type so I can place it in the legend)
-    node_traces = []
-    for entity_type in node_type_filter.value:
-        nodes_of_type = [n for n in G_comm.nodes() 
-                        if nodes_by_id.get(n, {}).get('sub_type') == entity_type]
+    _node_traces = []
+    for _entity_type in node_type_filter.value:
+        _nodes_of_type = [n for n in G_comm.nodes() 
+                        if nodes_by_id.get(n, {}).get('sub_type') == _entity_type]
 
-        if not nodes_of_type:
+        if not _nodes_of_type:
             continue
 
-        x_vals = [pos_comm[n][0] for n in nodes_of_type]
-        y_vals = [pos_comm[n][1] for n in nodes_of_type]
+        _x_vals = [pos_comm[n][0] for n in _nodes_of_type]
+        _y_vals = [pos_comm[n][1] for n in _nodes_of_type]
 
         # In here I calculated the node sizes based on degree
-        sizes = [max(15, min(50, G_comm.degree(n) * 5)) for n in nodes_of_type]
+        _sizes = [max(15, min(50, G_comm.degree(n) * 5)) for n in _nodes_of_type]
 
         # Added the Hover text
-        hover_texts = []
-        for n in nodes_of_type:
-            in_deg = G_comm.in_degree(n)
-            out_deg = G_comm.out_degree(n)
-            hover_texts.append(f"<b>{n}</b><br>Type: {entity_type}<br>Sent to: {out_deg} entities<br>Received from: {in_deg} entities")
+        _hover_texts = []
+        for _n in _nodes_of_type:
+            _in_deg = G_comm.in_degree(_n)
+            _out_deg = G_comm.out_degree(_n)
+            _hover_texts.append(f"<b>{_n}</b><br>Type: {_entity_type}<br>Sent to: {_out_deg} entities<br>Received from: {_in_deg} entities")
 
-        trace = go.Scatter(
-            x=x_vals,
-            y=y_vals,
+        _trace = go.Scatter(
+            x=_x_vals,
+            y=_y_vals,
             mode='markers+text',
             marker=dict(
-                size=sizes,
-                color=color_map[entity_type],
+                size=_sizes,
+                color=_color_map[_entity_type],
                 line=dict(width=2, color='white')
             ),
-            text=[n if len(n) < 15 else n[:12]+'...' for n in nodes_of_type],
+            text=[n if len(n) < 15 else n[:12]+'...' for n in _nodes_of_type],
             textposition='top center',
             textfont=dict(size=9),
             hoverinfo='text',
-            hovertext=hover_texts,
-            name=entity_type
+            hovertext=_hover_texts,
+            name=_entity_type
         )
-        node_traces.append(trace)
+        _node_traces.append(_trace)
 
     # Then finally I have combined all the traces
-    fig_comm_network = go.Figure(data=edge_traces + node_traces)
+    fig_comm_network = go.Figure(data=_edge_traces + _node_traces)
 
     fig_comm_network.update_layout(
         title=dict(
@@ -484,15 +484,15 @@ def _(all_entities, comm_matrix, go, heatmap_type_filter, np):
     entities_hm, matrix_hm = build_heatmap_data(heatmap_type_filter.value)
 
     # After that I create the labels with entity type indicators
-    labels_hm = []
-    for eid in entities_hm:
-        etype = all_entities[eid].get('sub_type', '?')[0]  # This is for the First letter
-        labels_hm.append(f"[{etype}] {eid}")
+    _labels_hm = []
+    for _eid in entities_hm:
+        _etype = all_entities[_eid].get('sub_type', '?')[0]  # This is for the First letter
+        _labels_hm.append(f"[{_etype}] {_eid}")
 
     fig_heatmap = go.Figure(data=go.Heatmap(
         z=matrix_hm,
-        x=labels_hm,
-        y=labels_hm,
+        x=_labels_hm,
+        y=_labels_hm,
         colorscale='Blues',
         hoverongaps=False,
         hovertemplate='<b>%{y}</b> → <b>%{x}</b><br>Messages: %{z}<extra></extra>'
@@ -555,23 +555,23 @@ def _(
         filtered_rels = [r for r in relationship_data if r['type'] in rel_types]
 
         # Count relationship types between entity pairs
-        edge_rels = Counter()
-        for rel in filtered_rels:
-            e1, e2 = rel['entity1'], rel['entity2']
-            if e1 in all_entities and e2 in all_entities:
-                key = tuple(sorted([e1, e2]))
-                edge_rels[(key, rel['type'])] += 1
+        _edge_rels = Counter()
+        for _rel in filtered_rels:
+            _e1, _e2 = _rel['entity1'], _rel['entity2']
+            if _e1 in all_entities and _e2 in all_entities:
+                _key = tuple(sorted([_e1, _e2]))
+                _edge_rels[(_key, _rel['type'])] += 1
 
         # Add nodes and edges
-        for (key, rel_type), count in edge_rels.items():
-            e1, e2 = key
-            G.add_node(e1, sub_type=all_entities[e1].get('sub_type'))
-            G.add_node(e2, sub_type=all_entities[e2].get('sub_type'))
+        for (_key, _rtype), _count in _edge_rels.items():
+            _e1, _e2 = _key
+            G.add_node(_e1, sub_type=all_entities[_e1].get('sub_type'))
+            G.add_node(_e2, sub_type=all_entities[_e2].get('sub_type'))
 
-            if G.has_edge(e1, e2):
-                G[e1][e2]['types'].append(rel_type)
+            if G.has_edge(_e1, _e2):
+                G[_e1][_e2]['types'].append(_rtype)
             else:
-                G.add_edge(e1, e2, types=[rel_type])
+                G.add_edge(_e1, _e2, types=[_rtype])
 
         return G
 
@@ -584,7 +584,7 @@ def _(
         pos_rel = {}
 
     # Color map for relationship types
-    rel_color_map = {
+    _rel_color_map = {
         'Colleagues': '#2ECC71',     # Green
         'Operates': '#3498DB',       # Blue
         'Reports': '#9B59B6',        # Purple
@@ -597,7 +597,7 @@ def _(
     }
 
     # Node type color map
-    node_color_map = {
+    _node_color_map = {
         'Person': '#4ECDC4',
         'Vessel': '#FF6B6B',
         'Organization': '#95E1D3',
@@ -605,69 +605,69 @@ def _(
     }
 
     # Create edge traces for each relationship type
-    rel_edge_traces = []
-    for rel_type in rel_type_filter.value:
-        x_edges, y_edges = [], []
-        for u, v, data in G_rel.edges(data=True):
-            if rel_type in data['types']:
-                x0, y0 = pos_rel[u]
-                x1, y1 = pos_rel[v]
-                x_edges.extend([x0, x1, None])
-                y_edges.extend([y0, y1, None])
+    _rel_edge_traces = []
+    for _rtype in rel_type_filter.value:
+        _x_edges, _y_edges = [], []
+        for _u, _v, _data in G_rel.edges(data=True):
+            if _rtype in _data['types']:
+                _x0, _y0 = pos_rel[_u]
+                _x1, _y1 = pos_rel[_v]
+                _x_edges.extend([_x0, _x1, None])
+                _y_edges.extend([_y0, _y1, None])
 
-        if x_edges:
-            trace = go.Scatter(
-                x=x_edges, y=y_edges,
+        if _x_edges:
+            _trace = go.Scatter(
+                x=_x_edges, y=_y_edges,
                 mode='lines',
-                line=dict(width=2, color=rel_color_map.get(rel_type, 'gray')),
-                name=rel_type,
+                line=dict(width=2, color=_rel_color_map.get(_rtype, 'gray')),
+                name=_rtype,
                 hoverinfo='none'
             )
-            rel_edge_traces.append(trace)
+            _rel_edge_traces.append(_trace)
 
     # Node traces
-    rel_node_traces = []
-    for ntype in ['Person', 'Vessel', 'Organization', 'Group']:
-        nodes_of_type = [n for n in G_rel.nodes() 
-                        if nodes_by_id.get(n, {}).get('sub_type') == ntype]
-        if not nodes_of_type:
+    _rel_node_traces = []
+    for _ntype in ['Person', 'Vessel', 'Organization', 'Group']:
+        _nodes_of_type = [n for n in G_rel.nodes() 
+                        if nodes_by_id.get(n, {}).get('sub_type') == _ntype]
+        if not _nodes_of_type:
             continue
 
-        x_vals = [pos_rel[n][0] for n in nodes_of_type]
-        y_vals = [pos_rel[n][1] for n in nodes_of_type]
+        _x_vals = [pos_rel[n][0] for n in _nodes_of_type]
+        _y_vals = [pos_rel[n][1] for n in _nodes_of_type]
 
         # Hover text with relationship info
-        hover_texts = []
-        for n in nodes_of_type:
-            neighbors = list(G_rel.neighbors(n))
-            rel_summary = []
-            for nb in neighbors:
-                types = G_rel[n][nb]['types']
-                rel_summary.append(f"  • {nb}: {', '.join(types)}")
-            hover_text = f"<b>{n}</b> ({ntype})<br>Relationships:<br>" + "<br>".join(rel_summary[:10])
-            if len(rel_summary) > 10:
-                hover_text += f"<br>  ...and {len(rel_summary)-10} more"
-            hover_texts.append(hover_text)
+        _hover_texts = []
+        for _n in _nodes_of_type:
+            _neighbors = list(G_rel.neighbors(_n))
+            _rel_summary = []
+            for _nb in _neighbors:
+                _types = G_rel[_n][_nb]['types']
+                _rel_summary.append(f"  • {_nb}: {', '.join(_types)}")
+            _hover_text = f"<b>{_n}</b> ({_ntype})<br>Relationships:<br>" + "<br>".join(_rel_summary[:10])
+            if len(_rel_summary) > 10:
+                _hover_text += f"<br>  ...and {len(_rel_summary)-10} more"
+            _hover_texts.append(_hover_text)
 
-        trace = go.Scatter(
-            x=x_vals, y=y_vals,
+        _trace = go.Scatter(
+            x=_x_vals, y=_y_vals,
             mode='markers+text',
             marker=dict(
                 size=20,
-                color=node_color_map[ntype],
+                color=_node_color_map[_ntype],
                 line=dict(width=2, color='white')
             ),
-            text=nodes_of_type,
+            text=_nodes_of_type,
             textposition='top center',
             textfont=dict(size=9),
             hoverinfo='text',
-            hovertext=hover_texts,
-            name=f'{ntype}s',
+            hovertext=_hover_texts,
+            name=f'{_ntype}s',
             legendgroup='nodes'
         )
-        rel_node_traces.append(trace)
+        _rel_node_traces.append(_trace)
 
-    fig_rel_network = go.Figure(data=rel_edge_traces + rel_node_traces)
+    fig_rel_network = go.Figure(data=_rel_edge_traces + _rel_node_traces)
 
     fig_rel_network.update_layout(
         title=dict(
