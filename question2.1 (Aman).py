@@ -1150,7 +1150,17 @@ def _(mo):
 
     Based on the visual analytics executed above, several key insights emerge about the interactions and relationships between vessels and people in Oceanus. The following findings are all derived directly from the data analysis.
 
-    TODO
+    The Communication Network graph reveals that message flow is concentrated around a small number of central entities. The majority of nodes connect only through one or two links, meaning most actors communicate via intermediaries rather than directly. This hub-and-spoke structure immediately narrows Clepper's focus to the most connected nodes they are the gatekeepers of information in Oceanus.
+
+    The Frequency Heatmap (sender = row, receiver = column) shows that many entity pairs communicate in one direction only. Several person-to-vessel pairs show one side consistently sending while the other receives a pattern consistent with operator-to-vessel or supervisor-to-subordinate dynamics. Truly bilateral pairs (dark cells on both sides of the diagonal) represent closer, more collaborative relationships worth distinguishing from purely top-down ones.
+
+    The Formal Relationship Network goes beyond communication frequency and reveals the underlying structural ties between entities. Among the relationship types Colleagues, Operates, Reports, Coordinates, Friends, Unfriendly the presence of Suspicious-labelled edges stands out as direct, data-grounded evidence of flagged connections. Entities that appear in both the suspicious relationship network and the high-activity communication hubs represent the most operationally significant actors for Clepper's investigation.
+
+    The individual profile tool (demonstrated with Nadia Conti as default) allows Clepper to quickly characterize any actor: how many messages they sent vs. received, who their communication partners are, and what formal relationships they hold all in one view. The directional indicators (↔, →, ←) in the relationships table clarify whether Nadia is a peer, a superior, or a subordinate in each connection.
+
+    The daily bar chart shows uneven communication volume across the Oct 1–14, 2040 observation window, with certain days spiking significantly. The hour-by-day-of-week heatmap tightens this further: recurring dark cells at consistent time slots point to deliberately scheduled communication a behavioural signature that distinguishes organized coordination from casual interaction, and a key signal for Clepper to investigate further.
+
+    All these graphs together shows that Oceanus's communication is shaped by small core of highly active, structurally central entities, some of who are quite explicitly flagged as suspicious. The communication pattern are asymmetric, temporally structured and mediated through hubg that are all consistent with a network engaged in coordinated activity.
     """)
     return
 

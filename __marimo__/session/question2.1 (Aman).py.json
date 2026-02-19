@@ -168,7 +168,7 @@
         {
           "type": "data",
           "data": {
-            "text/html": "<div style='display: flex;flex: 1;flex-direction: row;justify-content: flex-start;align-items: normal;flex-wrap: nowrap;gap: 2rem'><marimo-ui-element object-id='emfo-0' random-id='24875123-1fa7-e805-4d85-ddfc2c647c38'><marimo-multiselect data-initial-value='[&quot;Person&quot;,&quot;Vessel&quot;,&quot;Organization&quot;]' data-label='&quot;&lt;span class=&#92;&quot;markdown prose dark:prose-invert contents&#92;&quot;&gt;&lt;span class=&#92;&quot;paragraph&#92;&quot;&gt;Show Entity Types:&lt;/span&gt;&lt;/span&gt;&quot;' data-options='[&quot;Person&quot;,&quot;Vessel&quot;,&quot;Organization&quot;,&quot;Group&quot;]' data-full-width='false'></marimo-multiselect></marimo-ui-element><marimo-ui-element object-id='emfo-1' random-id='d46bfb1a-d447-197b-424f-87bf4aa718f2'><marimo-slider data-initial-value='2' data-label='&quot;&lt;span class=&#92;&quot;markdown prose dark:prose-invert contents&#92;&quot;&gt;&lt;span class=&#92;&quot;paragraph&#92;&quot;&gt;Minimum Communications to Show Edge:&lt;/span&gt;&lt;/span&gt;&quot;' data-start='1' data-stop='20' data-step='1' data-steps='[]' data-debounce='false' data-disabled='false' data-orientation='&quot;horizontal&quot;' data-show-value='false' data-include-input='false' data-full-width='false'></marimo-slider></marimo-ui-element><marimo-ui-element object-id='emfo-2' random-id='6b042d82-c8c2-9c04-4e03-16953fb84ab7'><marimo-dropdown data-initial-value='[&quot;spring&quot;]' data-label='&quot;&lt;span class=&#92;&quot;markdown prose dark:prose-invert contents&#92;&quot;&gt;&lt;span class=&#92;&quot;paragraph&#92;&quot;&gt;Network Layout:&lt;/span&gt;&lt;/span&gt;&quot;' data-options='[&quot;spring&quot;,&quot;circular&quot;,&quot;kamada_kawai&quot;]' data-allow-select-none='false' data-searchable='false' data-full-width='false'></marimo-dropdown></marimo-ui-element></div>"
+            "text/html": "<div style='display: flex;flex: 1;flex-direction: row;justify-content: flex-start;align-items: normal;flex-wrap: nowrap;gap: 2rem'><marimo-ui-element object-id='emfo-0' random-id='211edde8-ac43-de06-719e-1335b14ba93d'><marimo-multiselect data-initial-value='[&quot;Person&quot;,&quot;Vessel&quot;,&quot;Organization&quot;]' data-label='&quot;&lt;span class=&#92;&quot;markdown prose dark:prose-invert contents&#92;&quot;&gt;&lt;span class=&#92;&quot;paragraph&#92;&quot;&gt;Show Entity Types:&lt;/span&gt;&lt;/span&gt;&quot;' data-options='[&quot;Person&quot;,&quot;Vessel&quot;,&quot;Organization&quot;,&quot;Group&quot;]' data-full-width='false'></marimo-multiselect></marimo-ui-element><marimo-ui-element object-id='emfo-1' random-id='2535f4fd-cd63-3243-843f-4e5349439640'><marimo-slider data-initial-value='2' data-label='&quot;&lt;span class=&#92;&quot;markdown prose dark:prose-invert contents&#92;&quot;&gt;&lt;span class=&#92;&quot;paragraph&#92;&quot;&gt;Minimum Communications to Show Edge:&lt;/span&gt;&lt;/span&gt;&quot;' data-start='1' data-stop='20' data-step='1' data-steps='[]' data-debounce='false' data-disabled='false' data-orientation='&quot;horizontal&quot;' data-show-value='false' data-include-input='false' data-full-width='false'></marimo-slider></marimo-ui-element><marimo-ui-element object-id='emfo-2' random-id='b8e80073-a0c6-7cf4-1b8d-2715fee099aa'><marimo-dropdown data-initial-value='[&quot;spring&quot;]' data-label='&quot;&lt;span class=&#92;&quot;markdown prose dark:prose-invert contents&#92;&quot;&gt;&lt;span class=&#92;&quot;paragraph&#92;&quot;&gt;Network Layout:&lt;/span&gt;&lt;/span&gt;&quot;' data-options='[&quot;spring&quot;,&quot;circular&quot;,&quot;kamada_kawai&quot;]' data-allow-select-none='false' data-searchable='false' data-full-width='false'></marimo-dropdown></marimo-ui-element></div>"
           }
         }
       ],
@@ -220,7 +220,7 @@
         {
           "type": "data",
           "data": {
-            "text/html": "<marimo-ui-element object-id='ZHCJ-0' random-id='3ad6adaa-0650-d2c6-2403-41f4bb1f4e21'><marimo-multiselect data-initial-value='[&quot;Person&quot;,&quot;Vessel&quot;]' data-label='&quot;&lt;span class=&#92;&quot;markdown prose dark:prose-invert contents&#92;&quot;&gt;&lt;span class=&#92;&quot;paragraph&#92;&quot;&gt;Include Entity Types in Heatmap:&lt;/span&gt;&lt;/span&gt;&quot;' data-options='[&quot;Person&quot;,&quot;Vessel&quot;,&quot;Organization&quot;]' data-full-width='false'></marimo-multiselect></marimo-ui-element>"
+            "text/html": "<marimo-ui-element object-id='ZHCJ-0' random-id='cbc126d7-7f02-3979-af3a-cd6d7ac58e59'><marimo-multiselect data-initial-value='[&quot;Person&quot;,&quot;Vessel&quot;]' data-label='&quot;&lt;span class=&#92;&quot;markdown prose dark:prose-invert contents&#92;&quot;&gt;&lt;span class=&#92;&quot;paragraph&#92;&quot;&gt;Include Entity Types in Heatmap:&lt;/span&gt;&lt;/span&gt;&quot;' data-options='[&quot;Person&quot;,&quot;Vessel&quot;,&quot;Organization&quot;]' data-full-width='false'></marimo-multiselect></marimo-ui-element>"
           }
         }
       ],
@@ -259,7 +259,7 @@
         {
           "type": "data",
           "data": {
-            "text/html": "<marimo-ui-element object-id='TqIu-0' random-id='efbea45d-393c-b1ff-f942-86a64fedbb8b'><marimo-multiselect data-initial-value='[&quot;Colleagues&quot;,&quot;Operates&quot;,&quot;Reports&quot;,&quot;Suspicious&quot;]' data-label='&quot;&lt;span class=&#92;&quot;markdown prose dark:prose-invert contents&#92;&quot;&gt;&lt;span class=&#92;&quot;paragraph&#92;&quot;&gt;Show Relationship Types:&lt;/span&gt;&lt;/span&gt;&quot;' data-options='[&quot;Colleagues&quot;,&quot;Operates&quot;,&quot;Reports&quot;,&quot;Coordinates&quot;,&quot;Suspicious&quot;,&quot;Friends&quot;,&quot;Unfriendly&quot;]' data-full-width='false'></marimo-multiselect></marimo-ui-element>"
+            "text/html": "<marimo-ui-element object-id='TqIu-0' random-id='6786b078-5584-0cd9-9e44-65c5e1c3150f'><marimo-multiselect data-initial-value='[&quot;Colleagues&quot;,&quot;Operates&quot;,&quot;Reports&quot;,&quot;Suspicious&quot;]' data-label='&quot;&lt;span class=&#92;&quot;markdown prose dark:prose-invert contents&#92;&quot;&gt;&lt;span class=&#92;&quot;paragraph&#92;&quot;&gt;Show Relationship Types:&lt;/span&gt;&lt;/span&gt;&quot;' data-options='[&quot;Colleagues&quot;,&quot;Operates&quot;,&quot;Reports&quot;,&quot;Coordinates&quot;,&quot;Suspicious&quot;,&quot;Friends&quot;,&quot;Unfriendly&quot;]' data-full-width='false'></marimo-multiselect></marimo-ui-element>"
           }
         }
       ],
@@ -298,14 +298,14 @@
         {
           "type": "data",
           "data": {
-            "text/html": "<marimo-ui-element object-id='ulZA-0' random-id='bb522acb-04a4-f4a2-b51f-537272903d9b'><marimo-dropdown data-initial-value='[&quot;Nadia Conti&quot;]' data-label='&quot;&lt;span class=&#92;&quot;markdown prose dark:prose-invert contents&#92;&quot;&gt;&lt;span class=&#92;&quot;paragraph&#92;&quot;&gt;Select Entity to Analyze:&lt;/span&gt;&lt;/span&gt;&quot;' data-options='[&quot;Boss&quot;,&quot;City Officials&quot;,&quot;Clepper Jensen&quot;,&quot;Conservation Vessels&quot;,&quot;Davis&quot;,&quot;Defender&quot;,&quot;Diving Tour Operators&quot;,&quot;EcoVigil&quot;,&quot;Elise&quot;,&quot;Glitters Team&quot;,&quot;Green Guardians&quot;,&quot;Horizon&quot;,&quot;Kelly&quot;,&quot;Knowles&quot;,&quot;Liam Thorne&quot;,&quot;Mako&quot;,&quot;Mariner&#x27;s Dream&quot;,&quot;Marlin&quot;,&quot;Miranda Jordan&quot;,&quot;Mrs. Money&quot;,&quot;Nadia Conti&quot;,&quot;Neptune&quot;,&quot;Northern Light&quot;,&quot;Oceanus City Council&quot;,&quot;Osprey&quot;,&quot;Recreational Fishing Boats&quot;,&quot;Reef Guardian&quot;,&quot;Remora&quot;,&quot;Rodriguez&quot;,&quot;Sailor Shift&quot;,&quot;Sailor Shifts Team&quot;,&quot;Sam&quot;,&quot;Samantha Blake&quot;,&quot;Seawatch&quot;,&quot;Sentinel&quot;,&quot;Serenity&quot;,&quot;Small Fry&quot;,&quot;The Accountant&quot;,&quot;The Intern&quot;,&quot;The Lookout&quot;,&quot;The Middleman&quot;,&quot;Tourists&quot;,&quot;V. Miesel Shipping&quot;]' data-allow-select-none='false' data-searchable='false' data-full-width='false'></marimo-dropdown></marimo-ui-element>"
+            "text/html": "<marimo-ui-element object-id='ulZA-0' random-id='1e274604-58e2-4db4-0f3c-b77bbccbd353'><marimo-dropdown data-initial-value='[&quot;Nadia Conti&quot;]' data-label='&quot;&lt;span class=&#92;&quot;markdown prose dark:prose-invert contents&#92;&quot;&gt;&lt;span class=&#92;&quot;paragraph&#92;&quot;&gt;Select Entity to Analyze:&lt;/span&gt;&lt;/span&gt;&quot;' data-options='[&quot;Boss&quot;,&quot;City Officials&quot;,&quot;Clepper Jensen&quot;,&quot;Conservation Vessels&quot;,&quot;Davis&quot;,&quot;Defender&quot;,&quot;Diving Tour Operators&quot;,&quot;EcoVigil&quot;,&quot;Elise&quot;,&quot;Glitters Team&quot;,&quot;Green Guardians&quot;,&quot;Horizon&quot;,&quot;Kelly&quot;,&quot;Knowles&quot;,&quot;Liam Thorne&quot;,&quot;Mako&quot;,&quot;Mariner&#x27;s Dream&quot;,&quot;Marlin&quot;,&quot;Miranda Jordan&quot;,&quot;Mrs. Money&quot;,&quot;Nadia Conti&quot;,&quot;Neptune&quot;,&quot;Northern Light&quot;,&quot;Oceanus City Council&quot;,&quot;Osprey&quot;,&quot;Recreational Fishing Boats&quot;,&quot;Reef Guardian&quot;,&quot;Remora&quot;,&quot;Rodriguez&quot;,&quot;Sailor Shift&quot;,&quot;Sailor Shifts Team&quot;,&quot;Sam&quot;,&quot;Samantha Blake&quot;,&quot;Seawatch&quot;,&quot;Sentinel&quot;,&quot;Serenity&quot;,&quot;Small Fry&quot;,&quot;The Accountant&quot;,&quot;The Intern&quot;,&quot;The Lookout&quot;,&quot;The Middleman&quot;,&quot;Tourists&quot;,&quot;V. Miesel Shipping&quot;]' data-allow-select-none='false' data-searchable='false' data-full-width='false'></marimo-dropdown></marimo-ui-element>"
           }
         }
       ],
       "console": []
     },
     {
-      "id": "hsxW",
+      "id": "ecfG",
       "code_hash": "0d1cd756396876780541903e094d4398",
       "outputs": [
         {
@@ -318,7 +318,7 @@
       "console": []
     },
     {
-      "id": "ecfG",
+      "id": "Pvdt",
       "code_hash": "2c0444f4a1f6cbd0bb44b11b936d1d7c",
       "outputs": [
         {
@@ -331,7 +331,7 @@
       "console": []
     },
     {
-      "id": "Pvdt",
+      "id": "ZBYS",
       "code_hash": "95955541ab223d66aa4178c2fdb9e75d",
       "outputs": [
         {
@@ -344,7 +344,7 @@
       "console": []
     },
     {
-      "id": "ZBYS",
+      "id": "aLJB",
       "code_hash": "985fa5153b84a30b19fb126c4ba77e97",
       "outputs": [
         {
@@ -357,7 +357,7 @@
       "console": []
     },
     {
-      "id": "aLJB",
+      "id": "nHfw",
       "code_hash": "81133a9feb74e1811e17431ad2592498",
       "outputs": [
         {
@@ -370,7 +370,7 @@
       "console": []
     },
     {
-      "id": "nHfw",
+      "id": "xXTn",
       "code_hash": "48af3b46215fdd987c3c168e32edd96e",
       "outputs": [
         {
@@ -383,7 +383,7 @@
       "console": []
     },
     {
-      "id": "xXTn",
+      "id": "AjVT",
       "code_hash": "9e2a3ee59358eb226676f266b3bf947e",
       "outputs": [
         {
@@ -396,7 +396,7 @@
       "console": []
     },
     {
-      "id": "AjVT",
+      "id": "pHFh",
       "code_hash": "93b180316703fd8a6070708b589a46a6",
       "outputs": [
         {
@@ -409,7 +409,7 @@
       "console": []
     },
     {
-      "id": "pHFh",
+      "id": "NCOB",
       "code_hash": "a23b5a1272ef66905f11e1a802c9e64b",
       "outputs": [
         {
@@ -422,7 +422,7 @@
       "console": []
     },
     {
-      "id": "NCOB",
+      "id": "aqbW",
       "code_hash": "4518ea8260ceffadc4068436102a5e03",
       "outputs": [
         {
@@ -435,7 +435,7 @@
       "console": []
     },
     {
-      "id": "aqbW",
+      "id": "TRpd",
       "code_hash": "65ed643ccf9abdc834f015866cdd867a",
       "outputs": [
         {
@@ -448,20 +448,20 @@
       "console": []
     },
     {
-      "id": "TRpd",
+      "id": "TXez",
       "code_hash": "685d004c78de3ecd70d4c31c09e716e0",
       "outputs": [
         {
           "type": "data",
           "data": {
-            "text/html": "<marimo-ui-element object-id='TRpd-0' random-id='0af31e21-a9cc-6658-c481-cbc9b35be779'><marimo-table data-initial-value='[]' data-label='null' data-data='&quot;[{&#92;&quot;_marimo_row_id&#92;&quot;:0,&#92;&quot;Entity&#92;&quot;:&#92;&quot;Mako&#92;&quot;,&#92;&quot;Type&#92;&quot;:&#92;&quot;Vessel&#92;&quot;,&#92;&quot;Sent&#92;&quot;:35,&#92;&quot;Received&#92;&quot;:58,&#92;&quot;Total Messages&#92;&quot;:93},{&#92;&quot;_marimo_row_id&#92;&quot;:1,&#92;&quot;Entity&#92;&quot;:&#92;&quot;Oceanus City Council&#92;&quot;,&#92;&quot;Type&#92;&quot;:&#92;&quot;Organization&#92;&quot;,&#92;&quot;Sent&#92;&quot;:37,&#92;&quot;Received&#92;&quot;:45,&#92;&quot;Total Messages&#92;&quot;:82},{&#92;&quot;_marimo_row_id&#92;&quot;:2,&#92;&quot;Entity&#92;&quot;:&#92;&quot;Green Guardians&#92;&quot;,&#92;&quot;Type&#92;&quot;:&#92;&quot;Organization&#92;&quot;,&#92;&quot;Sent&#92;&quot;:44,&#92;&quot;Received&#92;&quot;:27,&#92;&quot;Total Messages&#92;&quot;:71},{&#92;&quot;_marimo_row_id&#92;&quot;:3,&#92;&quot;Entity&#92;&quot;:&#92;&quot;Reef Guardian&#92;&quot;,&#92;&quot;Type&#92;&quot;:&#92;&quot;Vessel&#92;&quot;,&#92;&quot;Sent&#92;&quot;:34,&#92;&quot;Received&#92;&quot;:28,&#92;&quot;Total Messages&#92;&quot;:62},{&#92;&quot;_marimo_row_id&#92;&quot;:4,&#92;&quot;Entity&#92;&quot;:&#92;&quot;Remora&#92;&quot;,&#92;&quot;Type&#92;&quot;:&#92;&quot;Vessel&#92;&quot;,&#92;&quot;Sent&#92;&quot;:25,&#92;&quot;Received&#92;&quot;:37,&#92;&quot;Total Messages&#92;&quot;:62},{&#92;&quot;_marimo_row_id&#92;&quot;:5,&#92;&quot;Entity&#92;&quot;:&#92;&quot;Neptune&#92;&quot;,&#92;&quot;Type&#92;&quot;:&#92;&quot;Vessel&#92;&quot;,&#92;&quot;Sent&#92;&quot;:34,&#92;&quot;Received&#92;&quot;:26,&#92;&quot;Total Messages&#92;&quot;:60},{&#92;&quot;_marimo_row_id&#92;&quot;:6,&#92;&quot;Entity&#92;&quot;:&#92;&quot;Himark Harbor&#92;&quot;,&#92;&quot;Type&#92;&quot;:&#92;&quot;Unknown&#92;&quot;,&#92;&quot;Sent&#92;&quot;:27,&#92;&quot;Received&#92;&quot;:18,&#92;&quot;Total Messages&#92;&quot;:45},{&#92;&quot;_marimo_row_id&#92;&quot;:7,&#92;&quot;Entity&#92;&quot;:&#92;&quot;Mrs. Money&#92;&quot;,&#92;&quot;Type&#92;&quot;:&#92;&quot;Person&#92;&quot;,&#92;&quot;Sent&#92;&quot;:19,&#92;&quot;Received&#92;&quot;:24,&#92;&quot;Total Messages&#92;&quot;:43},{&#92;&quot;_marimo_row_id&#92;&quot;:8,&#92;&quot;Entity&#92;&quot;:&#92;&quot;Davis&#92;&quot;,&#92;&quot;Type&#92;&quot;:&#92;&quot;Person&#92;&quot;,&#92;&quot;Sent&#92;&quot;:25,&#92;&quot;Received&#92;&quot;:18,&#92;&quot;Total Messages&#92;&quot;:43},{&#92;&quot;_marimo_row_id&#92;&quot;:9,&#92;&quot;Entity&#92;&quot;:&#92;&quot;The Intern&#92;&quot;,&#92;&quot;Type&#92;&quot;:&#92;&quot;Person&#92;&quot;,&#92;&quot;Sent&#92;&quot;:24,&#92;&quot;Received&#92;&quot;:18,&#92;&quot;Total Messages&#92;&quot;:42}]&quot;' data-total-rows='15' data-total-columns='5' data-max-columns='50' data-banner-text='&quot;&quot;' data-pagination='true' data-page-size='10' data-field-types='[[&quot;Entity&quot;,[&quot;string&quot;,&quot;object&quot;]],[&quot;Type&quot;,[&quot;string&quot;,&quot;object&quot;]],[&quot;Sent&quot;,[&quot;integer&quot;,&quot;int64&quot;]],[&quot;Received&quot;,[&quot;integer&quot;,&quot;int64&quot;]],[&quot;Total Messages&quot;,[&quot;integer&quot;,&quot;int64&quot;]]]' data-selection='&quot;multi&quot;' data-show-filters='true' data-show-download='true' data-show-column-summaries='true' data-show-data-types='true' data-show-page-size-selector='true' data-show-column-explorer='true' data-show-chart-builder='true' data-row-headers='[]' data-has-stable-row-id='true' data-lazy='false' data-preload='false'></marimo-table></marimo-ui-element>"
+            "text/html": "<marimo-ui-element object-id='TXez-0' random-id='c3fc40e4-1787-e99c-832b-bf0c67d6b39a'><marimo-table data-initial-value='[]' data-label='null' data-data='&quot;[{&#92;&quot;_marimo_row_id&#92;&quot;:0,&#92;&quot;Entity&#92;&quot;:&#92;&quot;Mako&#92;&quot;,&#92;&quot;Type&#92;&quot;:&#92;&quot;Vessel&#92;&quot;,&#92;&quot;Sent&#92;&quot;:35,&#92;&quot;Received&#92;&quot;:58,&#92;&quot;Total Messages&#92;&quot;:93},{&#92;&quot;_marimo_row_id&#92;&quot;:1,&#92;&quot;Entity&#92;&quot;:&#92;&quot;Oceanus City Council&#92;&quot;,&#92;&quot;Type&#92;&quot;:&#92;&quot;Organization&#92;&quot;,&#92;&quot;Sent&#92;&quot;:37,&#92;&quot;Received&#92;&quot;:45,&#92;&quot;Total Messages&#92;&quot;:82},{&#92;&quot;_marimo_row_id&#92;&quot;:2,&#92;&quot;Entity&#92;&quot;:&#92;&quot;Green Guardians&#92;&quot;,&#92;&quot;Type&#92;&quot;:&#92;&quot;Organization&#92;&quot;,&#92;&quot;Sent&#92;&quot;:44,&#92;&quot;Received&#92;&quot;:27,&#92;&quot;Total Messages&#92;&quot;:71},{&#92;&quot;_marimo_row_id&#92;&quot;:3,&#92;&quot;Entity&#92;&quot;:&#92;&quot;Remora&#92;&quot;,&#92;&quot;Type&#92;&quot;:&#92;&quot;Vessel&#92;&quot;,&#92;&quot;Sent&#92;&quot;:25,&#92;&quot;Received&#92;&quot;:37,&#92;&quot;Total Messages&#92;&quot;:62},{&#92;&quot;_marimo_row_id&#92;&quot;:4,&#92;&quot;Entity&#92;&quot;:&#92;&quot;Reef Guardian&#92;&quot;,&#92;&quot;Type&#92;&quot;:&#92;&quot;Vessel&#92;&quot;,&#92;&quot;Sent&#92;&quot;:34,&#92;&quot;Received&#92;&quot;:28,&#92;&quot;Total Messages&#92;&quot;:62},{&#92;&quot;_marimo_row_id&#92;&quot;:5,&#92;&quot;Entity&#92;&quot;:&#92;&quot;Neptune&#92;&quot;,&#92;&quot;Type&#92;&quot;:&#92;&quot;Vessel&#92;&quot;,&#92;&quot;Sent&#92;&quot;:34,&#92;&quot;Received&#92;&quot;:26,&#92;&quot;Total Messages&#92;&quot;:60},{&#92;&quot;_marimo_row_id&#92;&quot;:6,&#92;&quot;Entity&#92;&quot;:&#92;&quot;Himark Harbor&#92;&quot;,&#92;&quot;Type&#92;&quot;:&#92;&quot;Unknown&#92;&quot;,&#92;&quot;Sent&#92;&quot;:27,&#92;&quot;Received&#92;&quot;:18,&#92;&quot;Total Messages&#92;&quot;:45},{&#92;&quot;_marimo_row_id&#92;&quot;:7,&#92;&quot;Entity&#92;&quot;:&#92;&quot;Mrs. Money&#92;&quot;,&#92;&quot;Type&#92;&quot;:&#92;&quot;Person&#92;&quot;,&#92;&quot;Sent&#92;&quot;:19,&#92;&quot;Received&#92;&quot;:24,&#92;&quot;Total Messages&#92;&quot;:43},{&#92;&quot;_marimo_row_id&#92;&quot;:8,&#92;&quot;Entity&#92;&quot;:&#92;&quot;Davis&#92;&quot;,&#92;&quot;Type&#92;&quot;:&#92;&quot;Person&#92;&quot;,&#92;&quot;Sent&#92;&quot;:25,&#92;&quot;Received&#92;&quot;:18,&#92;&quot;Total Messages&#92;&quot;:43},{&#92;&quot;_marimo_row_id&#92;&quot;:9,&#92;&quot;Entity&#92;&quot;:&#92;&quot;The Intern&#92;&quot;,&#92;&quot;Type&#92;&quot;:&#92;&quot;Person&#92;&quot;,&#92;&quot;Sent&#92;&quot;:24,&#92;&quot;Received&#92;&quot;:18,&#92;&quot;Total Messages&#92;&quot;:42}]&quot;' data-total-rows='15' data-total-columns='5' data-max-columns='50' data-banner-text='&quot;&quot;' data-pagination='true' data-page-size='10' data-field-types='[[&quot;Entity&quot;,[&quot;string&quot;,&quot;object&quot;]],[&quot;Type&quot;,[&quot;string&quot;,&quot;object&quot;]],[&quot;Sent&quot;,[&quot;integer&quot;,&quot;int64&quot;]],[&quot;Received&quot;,[&quot;integer&quot;,&quot;int64&quot;]],[&quot;Total Messages&quot;,[&quot;integer&quot;,&quot;int64&quot;]]]' data-selection='&quot;multi&quot;' data-show-filters='true' data-show-download='true' data-show-column-summaries='true' data-show-data-types='true' data-show-page-size-selector='true' data-show-column-explorer='true' data-show-chart-builder='true' data-row-headers='[]' data-has-stable-row-id='true' data-lazy='false' data-preload='false'></marimo-table></marimo-ui-element>"
           }
         }
       ],
       "console": []
     },
     {
-      "id": "TXez",
+      "id": "dNNg",
       "code_hash": "6fafae2b2a3053c4104ae16e69c94354",
       "outputs": [
         {
@@ -474,7 +474,7 @@
       "console": []
     },
     {
-      "id": "dNNg",
+      "id": "yCnT",
       "code_hash": "2f9606900ac54db8420ed63865cee518",
       "outputs": [
         {
@@ -487,7 +487,7 @@
       "console": []
     },
     {
-      "id": "yCnT",
+      "id": "wlCL",
       "code_hash": "aeff117dd298177001971aaa4ed19a3a",
       "outputs": [
         {
@@ -500,7 +500,7 @@
       "console": []
     },
     {
-      "id": "wlCL",
+      "id": "kqZH",
       "code_hash": "7786cb865236050c0fb5d3ed05eacb4b",
       "outputs": [
         {
@@ -513,13 +513,13 @@
       "console": []
     },
     {
-      "id": "kqZH",
-      "code_hash": "217c8254e125a768710846e7ee6704e6",
+      "id": "wAgl",
+      "code_hash": "124dc1dc65f8e63ef6b7900aafcd2fed",
       "outputs": [
         {
           "type": "data",
           "data": {
-            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h2 id=\"findings-for-question-21\"><strong>Findings for Question 2.1</strong></h2>\n<span class=\"paragraph\">Based on the visual analytics executed above, several key insights emerge about the interactions and relationships between vessels and people in Oceanus. The following findings are all derived directly from the data analysis.</span>\n<span class=\"paragraph\">TODO</span></span>"
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h2 id=\"findings-for-question-21\"><strong>Findings for Question 2.1</strong></h2>\n<span class=\"paragraph\">Based on the visual analytics executed above, several key insights emerge about the interactions and relationships between vessels and people in Oceanus. The following findings are all derived directly from the data analysis.</span>\n<span class=\"paragraph\">The Communication Network graph reveals that message flow is concentrated around a small number of central entities. The majority of nodes connect only through one or two links, meaning most actors communicate via intermediaries rather than directly. This hub-and-spoke structure immediately narrows Clepper's focus to the most connected nodes they are the gatekeepers of information in Oceanus.</span>\n<span class=\"paragraph\">The Frequency Heatmap (sender = row, receiver = column) shows that many entity pairs communicate in one direction only. Several person-to-vessel pairs show one side consistently sending while the other receives a pattern consistent with operator-to-vessel or supervisor-to-subordinate dynamics. Truly bilateral pairs (dark cells on both sides of the diagonal) represent closer, more collaborative relationships worth distinguishing from purely top-down ones.</span>\n<span class=\"paragraph\">The Formal Relationship Network goes beyond communication frequency and reveals the underlying structural ties between entities. Among the relationship types Colleagues, Operates, Reports, Coordinates, Friends, Unfriendly the presence of Suspicious-labelled edges stands out as direct, data-grounded evidence of flagged connections. Entities that appear in both the suspicious relationship network and the high-activity communication hubs represent the most operationally significant actors for Clepper's investigation.</span>\n<span class=\"paragraph\">The individual profile tool (demonstrated with Nadia Conti as default) allows Clepper to quickly characterize any actor: how many messages they sent vs. received, who their communication partners are, and what formal relationships they hold all in one view. The directional indicators (\u2194, \u2192, \u2190) in the relationships table clarify whether Nadia is a peer, a superior, or a subordinate in each connection.</span>\n<span class=\"paragraph\">The daily bar chart shows uneven communication volume across the Oct 1\u201314, 2040 observation window, with certain days spiking significantly. The hour-by-day-of-week heatmap tightens this further: recurring dark cells at consistent time slots point to deliberately scheduled communication a behavioural signature that distinguishes organized coordination from casual interaction, and a key signal for Clepper to investigate further.</span>\n<span class=\"paragraph\">All these graphs together shows that Oceanus's communication is shaped by small core of highly active, structurally central entities, some of who are quite explicitly flagged as suspicious. The communication pattern are asymmetric, temporally structured and mediated through hubg that are all consistent with a network engaged in coordinated activity. </span></span>"
           }
         }
       ],
