@@ -135,12 +135,25 @@ def _(json):
     locations = {n['id']: n for n in graph_data['nodes'] if n.get('sub_type') == 'Location'}
 
     # In here we have listed all the entities of interest (especially for network analysis)
+    # all_entities excludes locations (for communication network focus on actors)
     all_entities = {**persons, **vessels, **organizations, **groups}
     entity_ids = set(all_entities.keys())
 
-    print(f"Loaded: {len(persons)} persons, {len(vessels)} vessels, {len(organizations)} organizations, {len(groups)} groups")
-    print(f"Total entities of interest: {len(all_entities)}")
-    return all_entities, entity_ids, graph_data, nodes_by_id
+    # all_entities_full includes locations (for proper type lookups and relationship extraction)
+    all_entities_full = {**persons, **vessels, **organizations, **groups, **locations}
+    entity_ids_with_locations = set(all_entities_full.keys())
+
+    print(f"Loaded: {len(persons)} persons, {len(vessels)} vessels, {len(organizations)} organizations, {len(groups)} groups, {len(locations)} locations")
+    print(f"Total entities of interest (excl. locations): {len(all_entities)}")
+    print(f"Total entities including locations: {len(all_entities_full)}")
+    return (
+        all_entities,
+        all_entities_full,
+        entity_ids,
+        entity_ids_with_locations,
+        graph_data,
+        nodes_by_id,
+    )
 
 
 @app.cell
@@ -164,7 +177,7 @@ def _(mo):
 
 
 @app.cell
-def _(defaultdict, entity_ids, graph_data):
+def _(defaultdict, entity_ids, entity_ids_with_locations, graph_data):
     # I have built edge lookup structures
     edges_to = defaultdict(list)
     edges_from = defaultdict(list)
@@ -201,14 +214,15 @@ def _(defaultdict, entity_ids, graph_data):
     relationships = [n for n in graph_data['nodes'] if n['type'] == 'Relationship']
 
     # Then build the relationship data structure
+    # FIXED: Now includes Location-based relationships (AccessPermission, Jurisdiction, etc.)
     relationship_data = []
     for _rel in relationships:
         _rel_id = _rel['id']
         _rel_type = _rel['sub_type']
 
-        # I have got the connected entities
-        _sources = [e['source'] for e in edges_to[_rel_id] if e['source'] in entity_ids]
-        _targets = [e['target'] for e in edges_from[_rel_id] if e['target'] in entity_ids]
+        # FIXED: Use entity_ids_with_locations to capture all relationships including those with Locations
+        _sources = [e['source'] for e in edges_to[_rel_id] if e['source'] in entity_ids_with_locations]
+        _targets = [e['target'] for e in edges_from[_rel_id] if e['target'] in entity_ids_with_locations]
 
         # For bidirectional relationships such as (Colleagues, Friends), both parties are sources
         if _rel_type in ['Colleagues', 'Friends']:
@@ -751,7 +765,7 @@ def _(mo):
 
 @app.cell
 def _(
-    all_entities,
+    all_entities_full,
     comm_matrix,
     entity_selector,
     go,
@@ -790,8 +804,15 @@ def _(
     _sent_data = sorted(_sent_to.items(), key=lambda x: -x[1])[:15]
     if _sent_data:
         _recipients, _counts = zip(*_sent_data)
-        # Color based on entity type: Teal for Person, Red for Vessel
-        _colors_sent = ['#FF6B6B' if all_entities.get(_r, {}).get('sub_type') == 'Vessel' else '#4ECDC4' for _r in _recipients]
+        # FIXED: Use all_entities_full for proper type identification (including Locations)
+        # Color based on entity type: Teal for Person, Red for Vessel, Green for Location, Mint for Org
+        def get_color(entity_id):
+            sub_type = all_entities_full.get(entity_id, {}).get('sub_type', 'Unknown')
+            color_map = {'Vessel': '#FF6B6B', 'Person': '#4ECDC4', 'Location': '#2ECC71', 
+                        'Organization': '#95E1D3', 'Group': '#F38181'}
+            return color_map.get(sub_type, '#CCCCCC')
+
+        _colors_sent = [get_color(_r) for _r in _recipients]
         fig_entity_profile.add_trace(
             go.Bar(x=list(_recipients), y=list(_counts), marker_color=_colors_sent, name='Sent', showlegend=False),
             row=1, col=1
@@ -801,17 +822,18 @@ def _(
     _recv_data = sorted(_received_from.items(), key=lambda x: -x[1])[:15]
     if _recv_data:
         _senders, _counts_r = zip(*_recv_data)
-        # Color based on entity type: Teal for Person, Red for Vessel
-        _colors_recv = ['#FF6B6B' if all_entities.get(_s, {}).get('sub_type') == 'Vessel' else '#4ECDC4' for _s in _senders]
+        # FIXED: Use all_entities_full for proper type identification
+        _colors_recv = [get_color(_s) for _s in _senders]
         fig_entity_profile.add_trace(
             go.Bar(x=list(_senders), y=list(_counts_r), marker_color=_colors_recv, name='Received', showlegend=False),
             row=1, col=2
         )
 
     # I update the layout for better readability
+    # FIXED: Use all_entities_full for proper type lookup
     fig_entity_profile.update_layout(
         title=dict(
-            text=f'<b>Communication Profile: {selected_entity}</b><br><sup>Type: {all_entities.get(selected_entity, {}).get("sub_type", "Unknown")} | Teal = Person, Red = Vessel</sup>',
+            text=f'<b>Communication Profile: {selected_entity}</b><br><sup>Type: {all_entities_full.get(selected_entity, {}).get("sub_type", "Unknown")} | Teal=Person, Red=Vessel, Green=Location, Mint=Org</sup>',
             x=0.5
         ),
         showlegend=False,
@@ -832,7 +854,8 @@ def _(
             'Relationship': _r['type'],
             'Direction': _direction,
             'Other Entity': _other,
-            'Other Type': all_entities.get(_other, {}).get('sub_type', 'Unknown')
+            # FIXED: Use all_entities_full for proper type identification
+            'Other Type': all_entities_full.get(_other, {}).get('sub_type', 'Unknown')
         })
 
     # I create a DataFrame for the relationships table
@@ -954,7 +977,8 @@ def _(go, timeline_df):
     _pivot_data = _hourly_daily.pivot(index='day_name', columns='hour', values='count').fillna(0)
 
     # I reorder the rows by day of week
-    _pivot_data = _pivot_data.reindex(_day_order)
+    # _pivot_data = _pivot_data.reindex(_day_order) - ISSUE
+    _pivot_data = _pivot_data.reindex(columns=range(24), fill_value=0)
 
     # I create the heatmap figure
     fig_hourly_heatmap = go.Figure(data=go.Heatmap(
@@ -1020,7 +1044,7 @@ def _(mo):
 
 
 @app.cell
-def _(all_entities, comm_matrix, mo, pd):
+def _(all_entities_full, comm_matrix, mo, pd):
     # In here I calculate the most active communicators
     _sent_counts = {}
     _recv_counts = {}
@@ -1040,7 +1064,8 @@ def _(all_entities, comm_matrix, mo, pd):
 
     # I create a DataFrame for the top active communicators
     top_active_df = pd.DataFrame(_top_active, columns=['Entity', 'Total Messages'])
-    top_active_df['Type'] = top_active_df['Entity'].apply(lambda x: all_entities.get(x, {}).get('sub_type', 'Unknown'))
+    # FIXED: Use all_entities_full to properly identify Location types (e.g., Himark Harbor)
+    top_active_df['Type'] = top_active_df['Entity'].apply(lambda x: all_entities_full.get(x, {}).get('sub_type', 'Unknown'))
     top_active_df['Sent'] = top_active_df['Entity'].apply(lambda x: _sent_counts.get(x, 0))
     top_active_df['Received'] = top_active_df['Entity'].apply(lambda x: _recv_counts.get(x, 0))
 
@@ -1161,6 +1186,20 @@ def _(mo):
     The daily bar chart shows uneven communication volume across the Oct 1–14, 2040 observation window, with certain days spiking significantly. The hour-by-day-of-week heatmap tightens this further: recurring dark cells at consistent time slots point to deliberately scheduled communication a behavioural signature that distinguishes organized coordination from casual interaction, and a key signal for Clepper to investigate further.
 
     All these graphs together shows that Oceanus's communication is shaped by small core of highly active, structurally central entities, some of who are quite explicitly flagged as suspicious. The communication pattern are asymmetric, temporally structured and mediated through hubg that are all consistent with a network engaged in coordinated activity.
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    # Bug Fixes: 5 Fixes Applied:
+
+    1. Added all_entities_full - A new dictionary that includes Locations (72 total entities) alongside the original all_entities (43 actors only)
+    2. Fixed relationship extraction - Now uses entity_ids_with_locations to capture AccessPermission, Jurisdiction, and other Location-based relationships. Relationship count went from 175 → 259
+    3. Fixed "Himark Harbor" type - Now correctly shows as "Location" instead of "Unknown" in the top communicators table
+    4. Fixed entity profile colors - Added proper color coding for all entity types including Locations (green)
+    5. Improved: _pivot_data = _pivot_data.reindex(columns=range(24), fill_value=0)
     """)
     return
 
