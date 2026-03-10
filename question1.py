@@ -1,6 +1,6 @@
 import marimo
 
-__generated_with = "0.19.6"
+__generated_with = "0.20.2"
 app = marimo.App(width="full")
 
 
@@ -15,6 +15,7 @@ def _():
     import networkx as nx
     from collections import Counter
     import time
+
     return alt, datetime, json_graph, json_lib, mo, pd
 
 
@@ -84,7 +85,7 @@ def _(G, df_comms, pd):
 
 
 @app.cell
-def _(mo, pd):
+def _(pd):
     df_intents = pd.read_csv("data/categories_v2.csv")
     print(f"Loaded {len(df_intents)} classified messages")
     df_intents.head()
@@ -132,18 +133,23 @@ def _(df_intents, mo):
     ))
     entity_type_dropdown = mo.ui.dropdown(options=_entity_types, value="All", label="Filter by Entity Type")
 
-    _all_entities = ["All"] + sorted(set(
+    _all_entities = sorted(set(
         df_intents["sender_name"].dropna().unique().tolist() +
         df_intents["receiver_name"].dropna().unique().tolist()
     ))
-    entity_dropdown = mo.ui.dropdown(options=_all_entities, value="All", label="Filter by Entity")
+    entity_dropdown = mo.ui.multiselect(options=_all_entities, value=[], label="Filter by Entity")
 
     suspicion_slider = mo.ui.slider(
         start=0, stop=10, step=1, value=0,
         label="Min. Suspicion",
         show_value=True
     )
-    return category_dropdown, entity_dropdown, entity_type_dropdown, suspicion_slider
+    return (
+        category_dropdown,
+        entity_dropdown,
+        entity_type_dropdown,
+        suspicion_slider,
+    )
 
 
 @app.cell
@@ -171,10 +177,11 @@ def _(
             (_df_filtered["receiver_type"] == entity_type_dropdown.value)
         ]
 
-    if entity_dropdown.value != "All":
+    if len(entity_dropdown.value) > 0:
+        _selected_entities = list(entity_dropdown.value)
         _df_filtered = _df_filtered[
-            (_df_filtered["sender_name"] == entity_dropdown.value) |
-            (_df_filtered["receiver_name"] == entity_dropdown.value)
+            (_df_filtered["sender_name"].isin(_selected_entities)) |
+            (_df_filtered["receiver_name"].isin(_selected_entities))
         ]
 
     if _min_suspicion > 0:
@@ -239,22 +246,22 @@ def _(
 
     # === THE BIG COMBINED D3 IFRAME ===
     _dashboard = mo.iframe(f"""
-<!DOCTYPE html>
-<html>
-<head>
-<script src="https://d3js.org/d3.v7.min.js"></script>
-<style>
+    <!DOCTYPE html>
+    <html>
+    <head>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
     * {{ box-sizing: border-box; }}
     body {{ margin: 0; font-family: 'Segoe UI', sans-serif; background: #fafafa; }}
-    #container {{ display: flex; width: 100%; height: 1500px; }}
-    #timeline-panel {{ width: 62%; height: 100%; overflow-y: auto; border-right: 2px solid #ddd; background: white; }}
-    #right-panel {{ width: 38%; height: 100%; display: flex; flex-direction: column; }}
+    #container {{ display: flex; width: 100%; height: 830px; }}
+    #timeline-panel {{ width: 60%; height: 100%; overflow-y: auto; border-right: 2px solid #ddd; background: white; }}
+    #right-panel {{ width: 40%; height: 100%; display: flex; flex-direction: column; }}
     #chat-panel {{ height: 50%; border-bottom: 2px solid #ddd; display: flex; flex-direction: column; background: white; }}
     #ego-panel {{ height: 50%; background: white; position: relative; }}
-    #chat-header {{ padding: 8px 12px; background: #f0f0f0; border-bottom: 1px solid #ddd;
-                    font-weight: bold; font-size: 13px; flex-shrink: 0; }}
+    #chat-header {{ padding: 6px 10px; background: #f0f0f0; border-bottom: 1px solid #ddd;
+                    font-weight: bold; font-size: 12px; flex-shrink: 0; }}
     #chat-tabs {{ display: flex; gap: 0; border-bottom: 1px solid #ddd; flex-shrink: 0; }}
-    .chat-tab {{ padding: 7px 14px; font-size: 12px; cursor: pointer; border: none;
+    .chat-tab {{ padding: 5px 12px; font-size: 11px; cursor: pointer; border: none;
                  background: #f0f0f0; border-bottom: 2px solid transparent; color: #666;
                  transition: all 0.15s; }}
     .chat-tab:hover {{ background: #e8e8e8; }}
@@ -273,16 +280,16 @@ def _(
     .tooltip {{
         position: fixed; background: white; border: 1px solid #ccc; border-radius: 6px;
         padding: 8px 12px; font-size: 12px; pointer-events: none;
-        box-shadow: 2px 2px 6px rgba(0,0,0,0.15); display: none; max-width: 350px; z-index: 1000;
+        box-shadow: 2px 2px 6px rgba(0,0,0,0.15); display: none; max-width: 450px; z-index: 1000;
     }}
-    #ego-title {{ position: absolute; top: 6px; left: 12px; font-size: 13px; font-weight: bold; color: #333; z-index: 10; }}
+    #ego-title {{ position: absolute; top: 4px; left: 10px; font-size: 12px; font-weight: bold; color: #333; z-index: 10; }}
     #chat-empty {{ padding: 30px; text-align: center; color: #aaa; font-size: 13px; }}
     #ego-empty {{ position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%);
                   color: #aaa; font-size: 13px; text-align: center; }}
-</style>
-</head>
-<body>
-<div id="container">
+    </style>
+    </head>
+    <body>
+    <div id="container">
     <div id="timeline-panel"><div id="chart"></div></div>
     <div id="right-panel">
         <div id="chat-panel">
@@ -299,71 +306,71 @@ def _(
             <svg id="ego-svg" width="100%" height="100%"></svg>
         </div>
     </div>
-</div>
-<div class="tooltip" id="tooltip"></div>
+    </div>
+    <div class="tooltip" id="tooltip"></div>
 
-<script>
-try {{
+    <script>
+    try {{
 
-var filteredData = {_filtered_json};
-var allData = {_all_json};
-var allDates = {_unique_dates};
-var categoryColors = {_category_colors_json};
+    var filteredData = {_filtered_json};
+    var allData = {_all_json};
+    var allDates = {_unique_dates};
+    var categoryColors = {_category_colors_json};
 
-var typeColors = {{
+    var typeColors = {{
     "Person": "#7B68EE",
     "Organization": "#DC143C",
     "Vessel": "#00CED1",
     "Group": "#FF8C00",
     "Location": "#4169E1"
-}};
+    }};
 
-// ============================================================
-// LEFT PANEL: TIMELINE
-// ============================================================
-var margin = {{top: 50, right: 20, bottom: 100, left: 70}};
-var rowHeight = 80;
-var summaryHeight = 80;
-var tlWidth = document.getElementById("timeline-panel").offsetWidth - margin.left - margin.right - 10;
-if (tlWidth < 400) tlWidth = 620;
-var tlHeight = allDates.length * rowHeight;
-var totalHeight = tlHeight + summaryHeight;
-var dotSize = 10;
-var dotGap = 2;
-var maxCols = 6;
+    // ============================================================
+    // LEFT PANEL: TIMELINE
+    // ============================================================
+    var margin = {{top: 60, right: 15, bottom: 35, left: 55}};
+    var rowHeight = 55;
+    var summaryHeight = 50;
+    var tlWidth = document.getElementById("timeline-panel").offsetWidth - margin.left - margin.right - 10;
+    if (tlWidth < 400) tlWidth = 620;
+    var tlHeight = allDates.length * rowHeight;
+    var totalHeight = tlHeight + summaryHeight;
+    var dotSize = 9;
+    var dotGap = 2;
+    var maxCols = 6;
 
-var svg = d3.select("#chart")
+    var svg = d3.select("#chart")
     .append("svg")
     .attr("width", tlWidth + margin.left + margin.right)
     .attr("height", totalHeight + margin.top + margin.bottom)
     .append("g")
     .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
-var x = d3.scaleLinear().domain([8, 16]).range([0, tlWidth]);
-var y = d3.scaleBand().domain(allDates).range([0, tlHeight]).padding(0.1);
-var tickVals = [8,9,10,11,12,13,14,15];
+    var x = d3.scaleLinear().domain([8, 15]).range([0, tlWidth]);
+    var y = d3.scaleBand().domain(allDates).range([0, tlHeight]).padding(0.1);
+    var tickVals = [8,9,10,11,12,13,14,15];
 
-svg.append("g")
+    svg.append("g")
     .call(d3.axisTop(x).tickValues(tickVals).tickFormat(function(d) {{ return d + ":00"; }}))
     .selectAll("text").style("font-size", "11px");
 
-tickVals.forEach(function(h) {{
+    tickVals.forEach(function(h) {{
     svg.append("line").attr("x1", x(h)).attr("x2", x(h))
         .attr("y1", 0).attr("y2", totalHeight)
         .attr("stroke", "#eee").attr("stroke-width", 1);
-}});
+    }});
 
-allDates.forEach(function(date, i) {{
+    allDates.forEach(function(date, i) {{
     svg.append("rect").attr("x", 0).attr("y", y(date))
         .attr("width", tlWidth).attr("height", y.bandwidth())
         .attr("fill", i % 2 === 0 ? "#f9f9f9" : "#ffffff").attr("stroke", "#eee");
-    svg.append("text").attr("x", -8).attr("y", y(date) + y.bandwidth() / 2)
+    svg.append("text").attr("x", -6).attr("y", y(date) + y.bandwidth() / 2)
         .attr("text-anchor", "end").attr("dominant-baseline", "middle")
-        .style("font-size", "11px").style("font-weight", "bold").text(i + 1);
-}});
+        .style("font-size", "10px").style("font-weight", "bold").text(i + 1);
+    }});
 
-// Density curves
-allDates.forEach(function(date) {{
+    // Density curves
+    allDates.forEach(function(date) {{
     var dayData = filteredData.filter(function(d) {{ return d.date_str === date; }});
     if (dayData.length === 0) return;
     var values = dayData.map(function(d) {{ return d.hour_float; }});
@@ -377,22 +384,22 @@ allDates.forEach(function(date) {{
         .y1(function(b) {{ return areaY(b.length); }})
         .curve(d3.curveBasis);
     svg.append("path").datum(bins).attr("d", area).attr("fill", "#5B9BD5").attr("opacity", 0.15);
-}});
+    }});
 
-// Group by date+hour
-var grouped = {{}};
-filteredData.forEach(function(d) {{
+    // Group by date+hour
+    var grouped = {{}};
+    filteredData.forEach(function(d) {{
     var hour = Math.floor(d.hour_float);
     var key = d.date_str + "|" + hour;
     if (!grouped[key]) grouped[key] = [];
     grouped[key].push(d);
-}});
+    }});
 
-var tooltip = d3.select("#tooltip");
-var allDotGroups = [];
+    var tooltip = d3.select("#tooltip");
+    var allDotGroups = [];
 
-// Draw clickable dots
-Object.keys(grouped).forEach(function(key) {{
+    // Draw clickable dots
+    Object.keys(grouped).forEach(function(key) {{
     var parts = key.split("|");
     var date = parts[0];
     var hour = parseInt(parts[1]);
@@ -408,20 +415,14 @@ Object.keys(grouped).forEach(function(key) {{
 
         var g = svg.append("g").style("cursor", "pointer").datum(d);
 
-        g.append("rect").attr("x", px).attr("y", py)
-            .attr("width", dotSize / 2).attr("height", dotSize)
-            .attr("fill", typeColors[d.sender_type] || "#999");
-        g.append("rect").attr("x", px + dotSize / 2).attr("y", py)
-            .attr("width", dotSize / 2).attr("height", dotSize)
-            .attr("fill", typeColors[d.receiver_type] || "#999");
-        g.append("rect").attr("class", "outline")
+        g.append("rect").attr("class", "dot-rect")
             .attr("x", px).attr("y", py)
             .attr("width", dotSize).attr("height", dotSize)
-            .attr("fill", "none").attr("rx", 1)
-            .attr("stroke", d.category_color).attr("stroke-width", 2);
+            .attr("fill", d.category_color).attr("rx", 2)
+            .attr("stroke", "#fff").attr("stroke-width", 0.5);
 
         g.on("mouseover", function(event) {{
-            d3.select(this).select(".outline").attr("stroke", "#333").attr("stroke-width", 3);
+            d3.select(this).select(".dot-rect").attr("stroke", "#333").attr("stroke-width", 2);
             tooltip.style("display", "block")
                 .html(
                     "<strong>" + d.sender_name + " &rarr; " + d.receiver_name + "</strong><br/>"
@@ -430,13 +431,13 @@ Object.keys(grouped).forEach(function(key) {{
                     + " <span style='background:" + (categoryColors[d.category]||"#999")
                     + ";color:#fff;padding:1px 5px;border-radius:3px;font-size:10px'>"
                     + d.suspicion + "/10</span><br/>"
-                    + "<em>" + d.content.substring(0,120) + "</em>"
+                    + "<div style='max-height:200px;overflow-y:auto;margin-top:4px;font-style:italic;white-space:pre-wrap'>" + d.content + "</div>"
                 )
                 .style("left", (event.clientX + 14) + "px")
                 .style("top", (event.clientY - 20) + "px");
         }})
         .on("mouseout", function() {{
-            d3.select(this).select(".outline").attr("stroke", d.category_color).attr("stroke-width", 2);
+            d3.select(this).select(".dot-rect").attr("stroke", "#fff").attr("stroke-width", 0.5);
             tooltip.style("display", "none");
         }})
         .on("click", function(event, datum) {{
@@ -445,19 +446,19 @@ Object.keys(grouped).forEach(function(key) {{
 
         allDotGroups.push({{g: g, d: d}});
     }});
-}});
+    }});
 
-// Summary row
-var summaryTop = tlHeight + 10;
-svg.append("rect").attr("x", 0).attr("y", summaryTop)
+    // Summary row
+    var summaryTop = tlHeight + 10;
+    svg.append("rect").attr("x", 0).attr("y", summaryTop)
     .attr("width", tlWidth).attr("height", summaryHeight)
     .attr("fill", "#f0f0f0").attr("stroke", "#ddd");
-svg.append("text").attr("x", -8).attr("y", summaryTop + summaryHeight / 2)
+    svg.append("text").attr("x", -6).attr("y", summaryTop + summaryHeight / 2)
     .attr("text-anchor", "end").attr("dominant-baseline", "middle")
-    .style("font-size", "11px").style("font-weight", "bold").text("All");
+    .style("font-size", "10px").style("font-weight", "bold").text("All");
 
-var allValues = filteredData.map(function(d) {{ return d.hour_float; }});
-if (allValues.length > 0) {{
+    var allValues = filteredData.map(function(d) {{ return d.hour_float; }});
+    if (allValues.length > 0) {{
     var allBins = d3.bin().domain([8, 15.5]).thresholds(40)(allValues);
     var allMax = d3.max(allBins, function(b) {{ return b.length; }});
     var summaryY = d3.scaleLinear().domain([0, allMax || 1])
@@ -475,66 +476,60 @@ if (allValues.length > 0) {{
             .y(function(b) {{ return summaryY(b.length); }})
             .curve(d3.curveBasis))
         .attr("fill", "none").attr("stroke", "#5B9BD5").attr("stroke-width", 2);
-}}
+    }}
 
-svg.append("g")
+    svg.append("g")
     .attr("transform", "translate(0," + (summaryTop + summaryHeight) + ")")
     .call(d3.axisBottom(x).tickValues(tickVals).tickFormat(function(d) {{ return d + ":00"; }}))
     .selectAll("text").style("font-size", "11px");
 
-// Legends
-var leg = svg.append("g").attr("transform", "translate(0," + (summaryTop + summaryHeight + 25) + ")");
-leg.append("text").attr("x", 0).attr("y", 0).text("Entity Type:").style("font-size", "10px").style("font-weight", "bold");
-Object.entries(typeColors).forEach(function(e, i) {{
-    leg.append("rect").attr("x", 80 + i * 105).attr("y", -9).attr("width", 12).attr("height", 12).attr("fill", e[1]).attr("rx", 2);
-    leg.append("text").attr("x", 80 + i * 105 + 16).attr("y", 0).text(e[0]).style("font-size", "9px");
-}});
-var cleg = svg.append("g").attr("transform", "translate(0," + (summaryTop + summaryHeight + 48) + ")");
-cleg.append("text").attr("x", 0).attr("y", 0).text("Category (border):").style("font-size", "10px").style("font-weight", "bold");
-Object.entries(categoryColors).forEach(function(e, i) {{
-    var col = i % 4;
-    var row = Math.floor(i / 4);
-    cleg.append("rect").attr("x", 120 + col * 160).attr("y", -9 + row * 16)
-        .attr("width", 10).attr("height", 10).attr("fill", "none").attr("stroke", e[1]).attr("stroke-width", 2);
-    cleg.append("text").attr("x", 120 + col * 160 + 14).attr("y", row * 16).text(e[0]).style("font-size", "8px");
-}});
+    // Legends
+    var cleg = svg.append("g").attr("transform", "translate(0,-50)");
+    cleg.append("text").attr("x", 0).attr("y", 0).text("Category:").style("font-size", "9px").style("font-weight", "bold");
+    Object.entries(categoryColors).forEach(function(e, i) {{
+    var col = i % 5;
+    var row = Math.floor(i / 5);
+    cleg.append("rect").attr("x", 60 + col * 125).attr("y", -8 + row * 14)
+        .attr("width", 9).attr("height", 9).attr("fill", e[1]).attr("rx", 1);
+    cleg.append("text").attr("x", 60 + col * 125 + 12).attr("y", row * 14).text(e[0]).style("font-size", "8px");
+    }});
 
-// ============================================================
-// CLICK HANDLER — updates chat box + ego network
-// ============================================================
-function onMessageClick(d) {{
+    // ============================================================
+    // CLICK HANDLER — updates chat box + ego network
+    // ============================================================
+    function onMessageClick(d) {{
     updateChatBox(d);
     updateEgoNetwork(d);
 
     // Highlight the clicked dot in timeline
     allDotGroups.forEach(function(item) {{
         if (item.d.node_id === d.node_id) {{
-            item.g.select(".outline").attr("stroke", "#ff0000").attr("stroke-width", 3);
+            item.g.select(".dot-rect").attr("stroke", "#ff0000").attr("stroke-width", 2.5);
         }} else {{
-            item.g.select(".outline").attr("stroke", item.d.category_color).attr("stroke-width", 2);
+            item.g.select(".dot-rect").attr("stroke", "#fff").attr("stroke-width", 0.5);
         }}
     }});
-}}
+    }}
 
-// ============================================================
-// RIGHT TOP: CHAT BOX (tabbed)
-// ============================================================
-var currentClickedMsg = null;
-var currentTab = "all";
+    // ============================================================
+    // RIGHT TOP: CHAT BOX (tabbed)
+    // ============================================================
+    var currentClickedMsg = null;
+    var currentTab = "all";
 
-function switchTab(tab) {{
+    function switchTab(tab) {{
     currentTab = tab;
     document.getElementById("tab-all").className = "chat-tab" + (tab === "all" ? " active" : "");
     document.getElementById("tab-convo").className = "chat-tab" + (tab === "convo" ? " active" : "");
     if (currentClickedMsg) renderChat(currentClickedMsg);
-}}
+    }}
 
-function updateChatBox(clickedMsg) {{
+    function updateChatBox(clickedMsg) {{
     currentClickedMsg = clickedMsg;
     renderChat(clickedMsg);
-}}
+    }}
 
-function renderChat(clickedMsg) {{
+    function renderChat(clickedMsg) {{
     var entity = clickedMsg.sender_name;
     var receiver = clickedMsg.receiver_name;
 
@@ -581,11 +576,7 @@ function renderChat(clickedMsg) {{
 
         div.style.borderLeftColor = catColor;
 
-        // Show full content for: clicked message always, conversation tab always, else truncate
-        var showFull = isClicked || currentTab === "convo";
-        var contentText = showFull
-            ? m.content
-            : (m.content.length > 150 ? m.content.substring(0, 150) + "\\u2026" : m.content);
+        var contentText = m.content;
 
         div.innerHTML =
             "<span class='sender' style='color:" + (isSender ? "#333" : "#666") + "'>"
@@ -608,12 +599,12 @@ function renderChat(clickedMsg) {{
     if (highlighted) {{
         highlighted.scrollIntoView({{ behavior: "smooth", block: "center" }});
     }}
-}}
+    }}
 
-// ============================================================
-// RIGHT BOTTOM: EGO NETWORK (circular layout like screenshot)
-// ============================================================
-function updateEgoNetwork(clickedMsg) {{
+    // ============================================================
+    // RIGHT BOTTOM: EGO NETWORK (hub-and-spoke, ego in center)
+    // ============================================================
+    function updateEgoNetwork(clickedMsg) {{
     var entity = clickedMsg.sender_name;
     document.getElementById("ego-title").textContent = "Network — " + entity;
     var emptyEl = document.getElementById("ego-empty");
@@ -624,197 +615,241 @@ function updateEgoNetwork(clickedMsg) {{
         return m.sender_name === entity || m.receiver_name === entity;
     }});
 
-    // Build set of nodes in subnetwork (ego + partners)
-    var nodeSet = new Set([entity]);
+    // Build partner stats
+    var partnerMap = {{}};
     entityMsgs.forEach(function(m) {{
-        nodeSet.add(m.sender_name);
-        nodeSet.add(m.receiver_name);
-    }});
-    var nodeList = Array.from(nodeSet);
-
-    // Get entity types
-    var nodeTypeMap = {{}};
-    allData.forEach(function(m) {{
-        if (nodeSet.has(m.sender_name)) nodeTypeMap[m.sender_name] = m.sender_type;
-        if (nodeSet.has(m.receiver_name)) nodeTypeMap[m.receiver_name] = m.receiver_type;
-    }});
-
-    // Build ALL edges between nodes in this subnetwork (not just to ego)
-    var edgePairMap = {{}};
-    allData.forEach(function(m) {{
-        if (nodeSet.has(m.sender_name) && nodeSet.has(m.receiver_name)) {{
-            var k = m.sender_name + "||" + m.receiver_name;
-            if (!edgePairMap[k]) {{
-                edgePairMap[k] = {{ source: m.sender_name, target: m.receiver_name,
-                    count: 0, categories: {{}}, maxSusp: 0 }};
-            }}
-            edgePairMap[k].count++;
-            edgePairMap[k].categories[m.category] = (edgePairMap[k].categories[m.category] || 0) + 1;
-            if (m.suspicion > edgePairMap[k].maxSusp) edgePairMap[k].maxSusp = m.suspicion;
+        var partner = m.sender_name === entity ? m.receiver_name : m.sender_name;
+        var direction = m.sender_name === entity ? "out" : "in";
+        if (!partnerMap[partner]) {{
+            partnerMap[partner] = {{ name: partner, type: "", out: 0, in: 0,
+                categories: {{}}, maxSusp: 0, totalSusp: 0, totalMsgs: 0 }};
         }}
+        partnerMap[partner][direction]++;
+        partnerMap[partner].totalMsgs++;
+        partnerMap[partner].totalSusp += (m.suspicion || 0);
+        partnerMap[partner].categories[m.category] = (partnerMap[partner].categories[m.category] || 0) + 1;
+        if (m.suspicion > partnerMap[partner].maxSusp) partnerMap[partner].maxSusp = m.suspicion;
     }});
-    var edges = Object.values(edgePairMap);
 
-    // Clear old SVG
+    // Get types
+    allData.forEach(function(m) {{
+        if (partnerMap[m.sender_name]) partnerMap[m.sender_name].type = m.sender_type;
+        if (partnerMap[m.receiver_name]) partnerMap[m.receiver_name].type = m.receiver_type;
+    }});
+
+    var partners = Object.values(partnerMap);
+    var nPartners = partners.length;
+
+    // Clear
     var egoSvg = d3.select("#ego-svg");
     egoSvg.selectAll("*").remove();
 
     var egoEl = document.getElementById("ego-panel");
     var egoW = egoEl.offsetWidth || 400;
     var egoH = egoEl.offsetHeight || 350;
-    var egoR = Math.min(egoW, egoH) / 2 - 70;
+    var egoR = Math.min(egoW, egoH) / 2 - 65;
     var ecx = egoW / 2;
-    var ecy = egoH / 2 + 5;
+    var ecy = egoH / 2;
 
     egoSvg.attr("viewBox", "0 0 " + egoW + " " + egoH);
 
-    // Arrow marker
+    // Arrow markers
     var defs = egoSvg.append("defs");
-    defs.append("marker").attr("id", "ego-arrow")
-        .attr("viewBox", "0 0 10 10").attr("refX", 28).attr("refY", 5)
-        .attr("markerWidth", 4).attr("markerHeight", 4).attr("orient", "auto")
-        .append("path").attr("d", "M 0 0 L 10 5 L 0 10 Z").attr("fill", "#666");
+    defs.append("marker").attr("id", "ego-arrow-out")
+        .attr("viewBox", "0 0 10 10").attr("refX", 26).attr("refY", 5)
+        .attr("markerWidth", 5).attr("markerHeight", 5).attr("orient", "auto")
+        .append("path").attr("d", "M 0 0 L 10 5 L 0 10 Z").attr("fill", "#555");
 
-    // Arrange nodes in a circle — ego at top
-    var nNodes = nodeList.length;
-    var egoIdx = nodeList.indexOf(entity);
-    // Move ego to index 0 so it sits at top
-    if (egoIdx > 0) {{
-        nodeList.splice(egoIdx, 1);
-        nodeList.unshift(entity);
-    }}
-
-    var nodePos = {{}};
-    nodeList.forEach(function(name, i) {{
-        var ang = (2 * Math.PI * i / nNodes) - Math.PI / 2;
-        nodePos[name] = {{
-            x: ecx + Math.cos(ang) * egoR,
-            y: ecy + Math.sin(ang) * egoR,
-            ang: ang
-        }};
-    }});
-
-    // Check for bidirectional edges
-    var edgeKeySet = new Set(edges.map(function(e) {{ return e.source + "||" + e.target; }}));
-
-    // Draw edges
-    edges.forEach(function(e) {{
-        var src = nodePos[e.source];
-        var tgt = nodePos[e.target];
-        if (!src || !tgt) return;
-
-        var dx = tgt.x - src.x;
-        var dy = tgt.y - src.y;
-        var dist = Math.sqrt(dx*dx + dy*dy) || 1;
-
-        // Curve offset for bidirectional edges
-        var hasBidi = edgeKeySet.has(e.target + "||" + e.source);
-        var offset = hasBidi ? 20 : 0;
-        var mx = (src.x + tgt.x) / 2 + (-dy / dist) * offset;
-        var my = (src.y + tgt.y) / 2 + (dx / dist) * offset;
-
-        var dominantCat = Object.entries(e.categories).sort(function(a,b){{return b[1]-a[1];}})[0][0];
-        var edgeColor = categoryColors[dominantCat] || "#999";
-
-        // Highlight edges connected to ego
-        var involvesEgo = (e.source === entity || e.target === entity);
-        var opacity = involvesEgo ? 0.7 : 0.2;
-        var strokeW = involvesEgo
-            ? Math.max(1.5, Math.min(e.count * 1.3, 5))
-            : Math.max(0.8, Math.min(e.count * 0.8, 3));
-
-        egoSvg.append("path")
-            .attr("d", "M" + src.x + "," + src.y + " Q" + mx + "," + my + " " + tgt.x + "," + tgt.y)
-            .attr("fill", "none")
-            .attr("stroke", edgeColor)
-            .attr("stroke-width", strokeW)
-            .attr("opacity", opacity)
-            .attr("marker-end", "url(#ego-arrow)");
-    }});
-
-    // Draw nodes
     var egoTooltip = d3.select("#tooltip");
 
-    nodeList.forEach(function(name) {{
-        var pos = nodePos[name];
-        var isEgo = name === entity;
-        var nType = nodeTypeMap[name] || "";
-        var r = isEgo ? 12 : 8;
+    // Get ego type
+    var egoType = "";
+    allData.forEach(function(m) {{
+        if (m.sender_name === entity) egoType = m.sender_type;
+    }});
 
-        var g = egoSvg.append("g")
-            .attr("transform", "translate(" + pos.x + "," + pos.y + ")")
-            .style("cursor", "pointer");
+    // Position partners in a circle around center
+    partners.forEach(function(p, i) {{
+        var ang = (2 * Math.PI * i / nPartners) - Math.PI / 2;
+        p.px = ecx + Math.cos(ang) * egoR;
+        p.py = ecy + Math.sin(ang) * egoR;
+        p.ang = ang;
+    }});
 
-        // Glow for ego
-        if (isEgo) {{
-            g.append("circle").attr("r", r + 4)
-                .attr("fill", "none").attr("stroke", typeColors[nType] || "#999")
-                .attr("stroke-width", 2).attr("opacity", 0.3);
+    // Draw edges (center to each partner)
+    partners.forEach(function(p) {{
+        var total = p.out + p.in;
+        var avgSusp = p.totalMsgs > 0 ? (p.totalSusp / p.totalMsgs).toFixed(1) : "0";
+        var dominantCat = Object.entries(p.categories).sort(function(a,b){{return b[1]-a[1];}})[0][0];
+        var edgeColor = categoryColors[dominantCat] || "#999";
+        var suspColor = parseFloat(avgSusp) >= 7 ? "#e6194b" : parseFloat(avgSusp) >= 4 ? "#f58231" : "#3cb44b";
+
+        var dx = p.px - ecx;
+        var dy = p.py - ecy;
+        var dist = Math.sqrt(dx*dx + dy*dy) || 1;
+
+        if (p.out > 0 && p.in > 0) {{
+            // Bidirectional: curve both slightly apart
+            var offset = 14;
+            var mx1 = (ecx+p.px)/2 + (-dy/dist)*offset;
+            var my1 = (ecy+p.py)/2 + (dx/dist)*offset;
+            var mx2 = (ecx+p.px)/2 + (dy/dist)*offset;
+            var my2 = (ecy+p.py)/2 + (-dx/dist)*offset;
+
+            egoSvg.append("path")
+                .attr("d","M"+ecx+","+ecy+" Q"+mx1+","+my1+" "+p.px+","+p.py)
+                .attr("fill","none").attr("stroke",edgeColor)
+                .attr("stroke-width",Math.max(1.5,Math.min(p.out*1.3,5)))
+                .attr("opacity",0.65).attr("marker-end","url(#ego-arrow-out)");
+            egoSvg.append("path")
+                .attr("d","M"+p.px+","+p.py+" Q"+mx2+","+my2+" "+ecx+","+ecy)
+                .attr("fill","none").attr("stroke",edgeColor)
+                .attr("stroke-width",Math.max(1,Math.min(p.in*1.1,4)))
+                .attr("opacity",0.45).attr("stroke-dasharray","5,3");
+        }} else if (p.out > 0) {{
+            egoSvg.append("line")
+                .attr("x1",ecx).attr("y1",ecy).attr("x2",p.px).attr("y2",p.py)
+                .attr("stroke",edgeColor)
+                .attr("stroke-width",Math.max(1.5,Math.min(p.out*1.3,5)))
+                .attr("opacity",0.65).attr("marker-end","url(#ego-arrow-out)");
+        }} else {{
+            egoSvg.append("line")
+                .attr("x1",p.px).attr("y1",p.py).attr("x2",ecx).attr("y2",ecy)
+                .attr("stroke",edgeColor)
+                .attr("stroke-width",Math.max(1,Math.min(p.in*1.1,4)))
+                .attr("opacity",0.45).attr("stroke-dasharray","5,3");
         }}
 
-        g.append("circle").attr("r", r)
-            .attr("fill", typeColors[nType] || "#999")
-            .attr("stroke", isEgo ? "#333" : "#555")
-            .attr("stroke-width", isEgo ? 2.5 : 1);
+        // Invisible wide hover target for edge tooltip
+        egoSvg.append("line")
+            .attr("x1",ecx).attr("y1",ecy).attr("x2",p.px).attr("y2",p.py)
+            .attr("stroke","transparent").attr("stroke-width",14)
+            .style("cursor","pointer")
+            .on("mouseover",function(event) {{
+                var catHTML = Object.entries(p.categories)
+                    .sort(function(a,b){{return b[1]-a[1];}})
+                    .map(function(kv){{
+                        return "<span style='color:"+(categoryColors[kv[0]]||"#999")+"'>&#9632;</span> "+kv[0]+": "+kv[1];
+                    }}).join("<br/>");
+                egoTooltip.style("display","block")
+                    .html(
+                        "<strong>"+entity+" &harr; "+p.name+"</strong><br/>"
+                        +"<div style='margin:4px 0;padding:4px 8px;background:#f5f5f5;border-radius:4px'>"
+                        +"<span style='font-size:16px;font-weight:bold'>"+total+"</span> messages"
+                        +" &nbsp;&middot;&nbsp; "
+                        +"<span style='font-size:10px'>sent "+p.out+" / received "+p.in+"</span>"
+                        +"</div>"
+                        +"<div style='margin:3px 0'>"
+                        +"Avg suspicion: <strong style='color:"+suspColor+"'>"+avgSusp+"/10</strong>"
+                        +" &nbsp;&middot;&nbsp; Max: <strong>"+p.maxSusp+"/10</strong>"
+                        +"</div>"
+                        +"<div style='margin-top:4px;font-size:11px'>"+catHTML+"</div>"
+                    )
+                    .style("left",(event.clientX+14)+"px")
+                    .style("top",(event.clientY-20)+"px");
+            }})
+            .on("mouseout",function(){{ egoTooltip.style("display","none"); }});
 
-        // Label
-        var anchor = (pos.ang > Math.PI/2 || pos.ang < -Math.PI/2) ? "end" : "start";
-        var labelR = r + 8;
-        var lx = Math.cos(pos.ang) * labelR;
-        var ly = Math.sin(pos.ang) * labelR;
+        // Count label on edge midpoint
+        if (total > 1) {{
+            var labelDist = dist * 0.45;
+            var lx = ecx + (dx/dist)*labelDist;
+            var ly = ecy + (dy/dist)*labelDist;
+            egoSvg.append("text").attr("x",lx).attr("y",ly-5)
+                .attr("text-anchor","middle").style("font-size","9px").style("fill","#555")
+                .style("pointer-events","none").text(total);
+        }}
+    }});
 
+    // Center ego node (on top)
+    egoSvg.append("circle").attr("cx",ecx).attr("cy",ecy).attr("r",16)
+        .attr("fill",typeColors[egoType]||"#999")
+        .attr("stroke","#333").attr("stroke-width",2.5);
+    egoSvg.append("circle").attr("cx",ecx).attr("cy",ecy).attr("r",22)
+        .attr("fill","none").attr("stroke",typeColors[egoType]||"#999")
+        .attr("stroke-width",1.5).attr("opacity",0.3);
+    egoSvg.append("text").attr("x",ecx).attr("y",ecy+30)
+        .attr("text-anchor","middle").style("font-size","11px").style("font-weight","bold")
+        .style("pointer-events","none")
+        .text(entity.length>20 ? entity.substring(0,20)+"\\u2026" : entity);
+
+    // Partner nodes
+    partners.forEach(function(p) {{
+        var suspBorder = p.maxSusp >= 7 ? "#e6194b" : p.maxSusp >= 4 ? "#f58231" : "#666";
+        var r = 9;
+        var g = egoSvg.append("g")
+            .attr("transform","translate("+p.px+","+p.py+")")
+            .style("cursor","pointer");
+        g.append("circle").attr("r",r)
+            .attr("fill",typeColors[p.type]||"#999")
+            .attr("stroke",suspBorder)
+            .attr("stroke-width",p.maxSusp>=4?2.5:1.2);
+
+        var anchor = (p.ang>Math.PI/2||p.ang<-Math.PI/2) ? "end" : "start";
+        var lxOff = Math.cos(p.ang)*(r+6);
+        var lyOff = Math.sin(p.ang)*(r+6);
         egoSvg.append("text")
-            .attr("x", pos.x + lx).attr("y", pos.y + ly)
-            .attr("text-anchor", anchor).attr("dominant-baseline", "middle")
-            .style("font-size", isEgo ? "10px" : "9px")
-            .style("font-weight", isEgo ? "bold" : "normal")
-            .style("fill", isEgo ? "#111" : "#444")
-            .text(name.length > 16 ? name.substring(0,16) + "\\u2026" : name);
+            .attr("x",p.px+lxOff).attr("y",p.py+lyOff)
+            .attr("text-anchor",anchor).attr("dominant-baseline","middle")
+            .style("font-size","9px").style("fill","#333")
+            .style("pointer-events","none")
+            .text(p.name.length>16?p.name.substring(0,16)+"\\u2026":p.name);
 
-        // Click to pivot
-        g.on("mouseover", function(event) {{
-            d3.select(this).select("circle").attr("stroke", "#333").attr("stroke-width", 2.5);
-            egoTooltip.style("display", "block")
-                .html("<strong>" + name + "</strong><br/>" + nType)
-                .style("left", (event.clientX + 12) + "px")
-                .style("top", (event.clientY - 20) + "px");
+        g.on("mouseover",function(event) {{
+            d3.select(this).select("circle").attr("stroke","#333").attr("stroke-width",2.5);
+            var avgS = p.totalMsgs>0?(p.totalSusp/p.totalMsgs).toFixed(1):"0";
+            egoTooltip.style("display","block")
+                .html("<strong>"+p.name+"</strong><br/>"+p.type
+                    +"<br/>"+p.totalMsgs+" msgs with "+entity
+                    +"<br/>Avg susp: "+avgS+"/10 &middot; Max: "+p.maxSusp+"/10")
+                .style("left",(event.clientX+12)+"px")
+                .style("top",(event.clientY-20)+"px");
         }})
-        .on("mouseout", function() {{
+        .on("mouseout",function() {{
             d3.select(this).select("circle")
-                .attr("stroke", isEgo ? "#333" : "#555")
-                .attr("stroke-width", isEgo ? 2.5 : 1);
-            egoTooltip.style("display", "none");
+                .attr("stroke",suspBorder)
+                .attr("stroke-width",p.maxSusp>=4?2.5:1.2);
+            egoTooltip.style("display","none");
         }})
-        .on("click", function() {{
-            var fakeMsg = allData.find(function(m) {{ return m.sender_name === name; }})
-                || allData.find(function(m) {{ return m.receiver_name === name; }});
-            if (fakeMsg) {{
-                var newMsg = Object.assign({{}}, fakeMsg);
-                newMsg.sender_name = name;
+        .on("click",function() {{
+            var fakeMsg = allData.find(function(m){{ return m.sender_name===p.name; }})
+                || allData.find(function(m){{ return m.receiver_name===p.name; }});
+            if(fakeMsg) {{
+                var newMsg = Object.assign({{}},fakeMsg);
+                newMsg.sender_name = p.name;
                 onMessageClick(newMsg);
             }}
         }});
     }});
 
     // Legend
-    var eLeg = egoSvg.append("g").attr("transform", "translate(6," + (egoH - 52) + ")");
+    var eLeg = egoSvg.append("g").attr("transform","translate(6,"+(egoH-50)+")");
     eLeg.append("text").attr("x",0).attr("y",0).style("font-size","10px").style("font-weight","bold").text("Entity type:");
-    var legendTypes = Object.entries(typeColors);
-    legendTypes.forEach(function(e, i) {{
-        eLeg.append("circle").attr("cx", 8 + i * 80).attr("cy", 14).attr("r", 5).attr("fill", e[1]);
-        eLeg.append("text").attr("x", 16 + i * 80).attr("y", 18).style("font-size", "9px").text(e[0]);
+    Object.entries(typeColors).forEach(function(e,i) {{
+        eLeg.append("circle").attr("cx",8+i*78).attr("cy",14).attr("r",5).attr("fill",e[1]);
+        eLeg.append("text").attr("x",16+i*78).attr("y",18).style("font-size","9px").text(e[0]);
     }});
-    eLeg.append("text").attr("x", 0).attr("y", 34).style("font-size", "9px").style("fill", "#888")
-        .text("Click a node to explore its network. Bright edges = connected to center.");
-}}
+    eLeg.append("line").attr("x1",0).attr("y1",32).attr("x2",18).attr("y2",32)
+        .attr("stroke","#888").attr("stroke-width",2);
+    eLeg.append("text").attr("x",22).attr("y",36).style("font-size","9px").text("sent");
+    eLeg.append("line").attr("x1",56).attr("y1",32).attr("x2",74).attr("y2",32)
+        .attr("stroke","#888").attr("stroke-width",1.5).attr("stroke-dasharray","4,3");
+    eLeg.append("text").attr("x",78).attr("y",36).style("font-size","9px").text("received");
+    eLeg.append("circle").attr("cx",120).attr("cy",32).attr("r",5)
+        .attr("fill","none").attr("stroke","#e6194b").attr("stroke-width",2);
+    eLeg.append("text").attr("x",128).attr("y",36).style("font-size","9px").text("susp ≥ 7");
+    eLeg.append("circle").attr("cx",185).attr("cy",32).attr("r",5)
+        .attr("fill","none").attr("stroke","#f58231").attr("stroke-width",2);
+    eLeg.append("text").attr("x",193).attr("y",36).style("font-size","9px").text("susp ≥ 4");
+    }}
 
-}} catch(e) {{
+    }} catch(e) {{
     document.getElementById("chart").innerHTML = "<pre style='color:red'>" + e.message + "\\n" + e.stack + "</pre>";
-}}
-</script>
-</body>
-</html>
-    """, width="100%", height="1520px")
+    }}
+    </script>
+    </body>
+    </html>
+    """, width="100%", height="850px")
 
     # === Summary statistics ===
     _mean_susp = round(_df_filtered["suspicion"].mean(), 1) if len(_df_filtered) > 0 else 0
@@ -828,8 +863,8 @@ function updateEgoNetwork(clickedMsg) {{
 
     _top_cats = _df_filtered["category"].value_counts().head(4)
     _cat_html = "".join([
-        f"<span style='display:inline-block;margin:1px 3px;padding:2px 7px;border-radius:4px;"
-        f"font-size:11px;background:{_category_colors.get(c, '#999')};color:white'>"
+        f"<span style='display:inline-block;margin:1px 2px;padding:1px 6px;border-radius:3px;"
+        f"font-size:10px;background:{_category_colors.get(c, '#999')};color:white'>"
         f"{c}: {n}</span>"
         for c, n in _top_cats.items()
     ])
@@ -840,25 +875,25 @@ function updateEgoNetwork(clickedMsg) {{
     ))
 
     _stats_panel = mo.md(f"""
-<div style="display:flex;gap:16px;align-items:center;flex-wrap:wrap;">
-<div style="text-align:center;padding:4px 12px;background:#f5f5f5;border-radius:6px;border:1px solid #e0e0e0">
-<div style="font-size:22px;font-weight:bold;color:#333">{_msg_count}</div>
-<div style="font-size:10px;color:#888">Messages</div></div>
-<div style="text-align:center;padding:4px 12px;background:#f5f5f5;border-radius:6px;border:1px solid #e0e0e0">
-<div style="font-size:22px;font-weight:bold;color:#333">{_n_entities}</div>
-<div style="font-size:10px;color:#888">Entities</div></div>
-<div style="text-align:center;padding:4px 12px;background:#f5f5f5;border-radius:6px;border:1px solid #e0e0e0">
-<div style="font-size:22px;font-weight:bold;color:{'#e6194b' if _mean_susp >= 5 else '#f58231' if _mean_susp >= 3 else '#3cb44b'}">{_mean_susp}</div>
-<div style="font-size:10px;color:#888">Mean Suspicion</div></div>
-<div style="text-align:center;padding:4px 12px;background:#f5f5f5;border-radius:6px;border:1px solid #e0e0e0">
-<div style="font-size:22px;font-weight:bold;color:#e6194b">{_n_high}</div>
-<div style="font-size:10px;color:#888">High Risk (≥7)</div></div>
-<div style="text-align:center;padding:4px 12px;background:#f5f5f5;border-radius:6px;border:1px solid #e0e0e0">
-<div style="font-size:14px;font-weight:bold;color:#333">{_max_susp_entity[:16]}</div>
-<div style="font-size:10px;color:#888">Most Suspicious (avg {_max_susp_val})</div></div>
-</div>
-<div style="margin-top:4px">{_cat_html}</div>
-""")
+    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+    <div style="text-align:center;padding:3px 10px;background:#f5f5f5;border-radius:5px;border:1px solid #e0e0e0">
+    <div style="font-size:18px;font-weight:bold;color:#333">{_msg_count}</div>
+    <div style="font-size:9px;color:#888">Messages</div></div>
+    <div style="text-align:center;padding:3px 10px;background:#f5f5f5;border-radius:5px;border:1px solid #e0e0e0">
+    <div style="font-size:18px;font-weight:bold;color:#333">{_n_entities}</div>
+    <div style="font-size:9px;color:#888">Entities</div></div>
+    <div style="text-align:center;padding:3px 10px;background:#f5f5f5;border-radius:5px;border:1px solid #e0e0e0">
+    <div style="font-size:18px;font-weight:bold;color:{'#e6194b' if _mean_susp >= 5 else '#f58231' if _mean_susp >= 3 else '#3cb44b'}">{_mean_susp}</div>
+    <div style="font-size:9px;color:#888">Avg Suspicion</div></div>
+    <div style="text-align:center;padding:3px 10px;background:#f5f5f5;border-radius:5px;border:1px solid #e0e0e0">
+    <div style="font-size:18px;font-weight:bold;color:#e6194b">{_n_high}</div>
+    <div style="font-size:9px;color:#888">High Risk (≥7)</div></div>
+    <div style="text-align:center;padding:3px 10px;background:#f5f5f5;border-radius:5px;border:1px solid #e0e0e0">
+    <div style="font-size:13px;font-weight:bold;color:#333">{_max_susp_entity[:16]}</div>
+    <div style="font-size:9px;color:#888">Top Suspect (avg {_max_susp_val})</div></div>
+    </div>
+    <div style="margin-top:2px">{_cat_html}</div>
+    """)
 
     mo.vstack([
         mo.md(f"### Communication Intelligence Dashboard"),
@@ -886,13 +921,90 @@ def _(alt, df_intents, mo):
 
 
 @app.cell
-def _(alt, df_intents, mo):
-    _intent_hour = alt.Chart(df_intents).mark_bar().encode(
-        x=alt.X("hour_float:O", title="Hour of Day"),
-        y=alt.Y("count()", title="Count"),
-        color=alt.Color("category:N", title="Category"),
-    ).properties(title="Category Distribution by Hour", width=700, height=350)
-    mo.vstack([mo.md("### When do different categories occur?"), _intent_hour])
+def _(G, alt, mo, pd, sender):
+    import re as _re
+
+    _self_msgs = []
+    for _n, _a in G.nodes(data=True):
+        if _a.get("sub_type") != "Communication":
+            continue
+
+        _sender = _receiver = None
+        for _pred in G.predecessors(_n):
+            if G.nodes[_pred].get("type") == "Entity" and G.edges[_pred, _n].get("type") == "sent":
+                _sender = G.nodes[_pred].get("name", _pred)
+        for _succ in G.successors(_n):
+            if G.nodes[_succ].get("type") == "Entity" and G.edges[_n, _succ].get("type") == "received":
+                _receiver = G.nodes[_succ].get("name", _succ)
+
+        if _sender and _sender == _receiver:
+            _content = _a.get("content", "")
+            _match = _re.match(r"^([\w\s.]+),\s+(?:it's\s+)?([\w\s.]+?)\s+(?:here|reporting|responding|checking|this is)", _content)
+            _actual = _match.group(2).strip() if _match else "???"
+            _addressee = _match.group(1).strip() if _match else sender
+
+            _self_msgs.append({
+                "node_id": _n,
+                "graph_sender": _sender,
+                "graph_receiver": _receiver,
+                "actual_sender": _actual,
+                "actual_receiver": _sender,
+                "timestamp": _a.get("timestamp", ""),
+                "content": _content[:200],
+                "mislabeled": _actual != _sender,
+            })
+
+    _df_self = pd.DataFrame(_self_msgs)
+
+    # Summary chart: how often each actual sender is hidden
+    _chart_actual = alt.Chart(_df_self).mark_bar().encode(
+        x=alt.X("count()", title="Messages where they are the hidden sender"),
+        y=alt.Y("actual_sender:N", title="Actual Sender (from content)", sort="-x"),
+        color=alt.Color("graph_sender:N", title="Graph labels it as"),
+        tooltip=["actual_sender", "graph_sender", "count()"]
+    ).properties(title="Hidden Senders: who actually sent the 31 self-labeled messages?", width=600, height=350)
+
+    # Summary chart: which graph entities receive self-messages
+    _chart_graph = alt.Chart(_df_self).mark_bar().encode(
+        x=alt.X("count()", title="Self-messages received"),
+        y=alt.Y("graph_sender:N", title="Graph Entity (sender = receiver)", sort="-x"),
+        color=alt.Color("actual_sender:N", title="Actual sender"),
+        tooltip=["graph_sender", "actual_sender", "count()"]
+    ).properties(title="Which entities have misattributed messages?", width=600, height=300)
+
+    # Build styled HTML table
+    _rows_html = ""
+    for _, _r in _df_self.sort_values("timestamp").iterrows():
+        _color = "#ffe0e0" if _r["mislabeled"] else "#e0ffe0"
+        _rows_html += f"""<tr style="background:{_color}">
+            <td style="padding:4px 8px;font-size:11px">{_r['timestamp']}</td>
+            <td style="padding:4px 8px;font-size:11px"><strong>{_r['graph_sender']}</strong> → {_r['graph_receiver']}</td>
+            <td style="padding:4px 8px;font-size:11px;color:#c00"><strong>{_r['actual_sender']}</strong> → {_r['actual_receiver']}</td>
+            <td style="padding:4px 8px;font-size:11px">{_r['content'][:120]}…</td>
+        </tr>"""
+
+    _table_html = mo.md(f"""
+    <div style="max-height:400px;overflow-y:auto;border:1px solid #ddd;border-radius:6px">
+    <table style="width:100%;border-collapse:collapse">
+    <thead style="position:sticky;top:0;background:#f5f5f5">
+    <tr>
+    <th style="padding:6px 8px;text-align:left;font-size:11px;border-bottom:2px solid #ddd">Timestamp</th>
+    <th style="padding:6px 8px;text-align:left;font-size:11px;border-bottom:2px solid #ddd">Graph Says</th>
+    <th style="padding:6px 8px;text-align:left;font-size:11px;border-bottom:2px solid #ddd">Actually</th>
+    <th style="padding:6px 8px;text-align:left;font-size:11px;border-bottom:2px solid #ddd">Content</th>
+    </tr></thead>
+    <tbody>{_rows_html}</tbody>
+    </table></div>
+    """)
+
+    mo.vstack([
+        mo.md(f"""### Self-Message Audit: {len(_df_self)} messages where sender = receiver in graph
+    These messages have the same entity as both sender and receiver in the knowledge graph,
+    but the message content reveals a different actual sender (radio-style: *"RecipientName, ActualSender here..."*).
+    Red rows = mislabeled, green = correctly labeled."""),
+        mo.hstack([_chart_actual, _chart_graph]),
+        _table_html,
+    ])
     return
 
 
