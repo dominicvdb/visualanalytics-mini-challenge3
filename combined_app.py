@@ -1239,152 +1239,396 @@ def _(mo):
         label="Minimum Communications to Show Edge:"
     )
 
-    layout_select = mo.ui.dropdown(
-        options=['spring', 'circular', 'kamada_kawai'],
-        value='spring',
-        label="Network Layout:"
-    )
-
-    mo.hstack([node_type_filter, min_comm_slider, layout_select], justify='start', gap=2)
-    return layout_select, min_comm_slider, node_type_filter
+    mo.hstack([node_type_filter, min_comm_slider], justify='start', gap=2)
+    return min_comm_slider, node_type_filter
 
 
 @app.cell
-def _(
-    all_entities,
-    comm_matrix,
-    go,
-    layout_select,
-    min_comm_slider,
-    node_type_filter,
-    nodes_by_id,
-    nx,
-):
-    def build_comm_network(entity_types, min_comms, layout):
-        filtered_entities = {
-            eid: e for eid, e in all_entities.items()
-            if e.get('sub_type') in entity_types
-        }
-
-        G_comm_local = nx.DiGraph()
-
-        for eid, entity in filtered_entities.items():
-            G_comm_local.add_node(eid,
-                      label=entity.get('name', eid),
-                      sub_type=entity.get('sub_type'))
-
-        edge_weights = {}
-        for sender in comm_matrix:
-            if sender not in filtered_entities:
-                continue
-            for receiver, comms in comm_matrix[sender].items():
-                if receiver not in filtered_entities:
-                    continue
-                weight = len(comms)
-                if weight >= min_comms:
-                    G_comm_local.add_edge(sender, receiver, weight=weight)
-                    edge_weights[(sender, receiver)] = weight
-
-        if layout == 'spring':
-            pos = nx.spring_layout(G_comm_local, k=2, iterations=50, seed=42)
-        elif layout == 'circular':
-            pos = nx.circular_layout(G_comm_local)
-        else:
-            pos = nx.kamada_kawai_layout(G_comm_local)
-
-        return G_comm_local, pos, edge_weights
-
-    G_comm, pos_comm, edge_weights_comm = build_comm_network(
-        node_type_filter.value,
-        min_comm_slider.value,
-        layout_select.value
-    )
-
-    _color_map = {
-        'Person': '#4ECDC4',
-        'Vessel': '#FF6B6B',
+def _(all_entities, comm_matrix, json_lib, min_comm_slider, mo, node_type_filter):
+    _node_color_map = {
+        'Person':       '#4ECDC4',
+        'Vessel':       '#FF6B6B',
         'Organization': '#95E1D3',
-        'Group': '#F38181'
+        'Group':        '#F38181',
     }
 
-    _edge_traces = []
-    for (_u, _v), _weight in edge_weights_comm.items():
-        _x0, _y0 = pos_comm[_u]
-        _x1, _y1 = pos_comm[_v]
+    _filtered_entities = {
+        eid: e for eid, e in all_entities.items()
+        if e.get('sub_type') in node_type_filter.value
+    }
 
-        _edge_trace = go.Scatter(
-            x=[_x0, _x1, None],
-            y=[_y0, _y1, None],
-            mode='lines',
-            line=dict(
-                width=min(_weight / 2, 8),
-                color='rgba(150, 150, 150, 0.4)'
-            ),
-            hoverinfo='text',
-            text=f"{_u} → {_v}: {_weight} messages",
-            showlegend=False
-        )
-        _edge_traces.append(_edge_trace)
-
-    _node_traces = []
-    for _entity_type in node_type_filter.value:
-        _nodes_of_type = [n for n in G_comm.nodes()
-                        if nodes_by_id.get(n, {}).get('sub_type') == _entity_type]
-
-        if not _nodes_of_type:
+    # Build edges above threshold
+    _edges_raw = {}
+    for _s in comm_matrix:
+        if _s not in _filtered_entities:
             continue
+        for _r, _comms in comm_matrix[_s].items():
+            if _r not in _filtered_entities:
+                continue
+            _w = len(_comms)
+            if _w >= min_comm_slider.value:
+                _edges_raw[(_s, _r)] = _w
 
-        _x_vals = [pos_comm[n][0] for n in _nodes_of_type]
-        _y_vals = [pos_comm[n][1] for n in _nodes_of_type]
+    # Per-node activity totals (from visible edges only)
+    _sent_counts = {}
+    _recv_counts = {}
+    for (_s, _r), _w in _edges_raw.items():
+        _sent_counts[_s] = _sent_counts.get(_s, 0) + _w
+        _recv_counts[_r] = _recv_counts.get(_r, 0) + _w
 
-        _sizes = [max(15, min(50, G_comm.degree(n) * 5)) for n in _nodes_of_type]
+    _active_nodes = set(_sent_counts) | set(_recv_counts)
 
-        _hover_texts = []
-        for _n in _nodes_of_type:
-            _in_deg = G_comm.in_degree(_n)
-            _out_deg = G_comm.out_degree(_n)
-            _hover_texts.append(f"<b>{_n}</b><br>Type: {_entity_type}<br>Sent to: {_out_deg} entities<br>Received from: {_in_deg} entities")
+    _nodes_data = [
+        {
+            "id": nid,
+            "sub_type": _filtered_entities[nid].get("sub_type", "Unknown"),
+            "total_sent":     _sent_counts.get(nid, 0),
+            "total_received": _recv_counts.get(nid, 0),
+        }
+        for nid in _active_nodes
+        if nid in _filtered_entities
+    ]
+    _edges_data = [
+        {"source": s, "target": r, "weight": w}
+        for (s, r), w in _edges_raw.items()
+    ]
 
-        _trace = go.Scatter(
-            x=_x_vals,
-            y=_y_vals,
-            mode='markers+text',
-            marker=dict(
-                size=_sizes,
-                color=_color_map[_entity_type],
-                line=dict(width=2, color='white')
-            ),
-            text=[n if len(n) < 15 else n[:12]+'...' for n in _nodes_of_type],
-            textposition='top center',
-            textfont=dict(size=9),
-            hoverinfo='text',
-            hovertext=_hover_texts,
-            name=_entity_type
-        )
-        _node_traces.append(_trace)
+    _nodes_json      = json_lib.dumps(_nodes_data)
+    _edges_json      = json_lib.dumps(_edges_data)
+    _node_colors_json = json_lib.dumps(_node_color_map)
+    _n_nodes = len(_nodes_data)
+    _n_edges = len(_edges_data)
 
-    fig_comm_network = go.Figure(data=_edge_traces + _node_traces)
+    mo.iframe(f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+    * {{ box-sizing: border-box; }}
+    body {{ margin: 0; font-family: 'Segoe UI', sans-serif; background: #fafafa; }}
+    #container {{ display: flex; width: 100%; height: 740px; }}
+    #graph-wrap {{ flex: 1; height: 100%; background: white; overflow: hidden; position: relative; }}
+    #detail-panel {{
+        width: 280px; height: 100%; background: white;
+        border-left: 2px solid #ddd; display: flex; flex-direction: column;
+    }}
+    #detail-header {{
+        padding: 8px 12px; background: #f0f0f0; border-bottom: 1px solid #ddd;
+        font-weight: bold; font-size: 13px; flex-shrink: 0;
+    }}
+    #detail-body {{ flex: 1; overflow-y: auto; padding: 10px 12px; }}
+    #detail-empty {{ color: #aaa; font-size: 13px; text-align: center; margin-top: 60px; }}
+    .partner-row {{
+        padding: 5px 8px; margin: 3px 0; border-radius: 6px;
+        background: #f9f9f9; font-size: 12px;
+        display: flex; align-items: center; justify-content: space-between;
+    }}
+    .partner-row .dir {{ color: #888; font-size: 13px; margin-right: 6px; flex-shrink: 0; }}
+    .partner-row .pname {{ flex: 1; font-weight: bold; white-space: nowrap;
+                           overflow: hidden; text-overflow: ellipsis; }}
+    .partner-row .count {{ font-size: 11px; color: white; padding: 1px 6px;
+                           border-radius: 10px; flex-shrink: 0; margin-left: 6px; }}
+    .section-label {{ font-size: 11px; font-weight: bold; color: #666;
+                      margin: 10px 0 4px; text-transform: uppercase; letter-spacing: 0.5px; }}
+    #graph-stats {{
+        position: absolute; top: 8px; left: 10px; font-size: 11px; color: #666;
+        background: rgba(255,255,255,0.85); padding: 3px 8px;
+        border-radius: 4px; border: 1px solid #eee; pointer-events: none;
+    }}
+    #graph-hint {{
+        position: absolute; bottom: 8px; left: 10px; font-size: 10px; color: #aaa;
+        pointer-events: none;
+    }}
+    .tooltip {{
+        position: fixed; background: white; border: 1px solid #ccc; border-radius: 6px;
+        padding: 8px 12px; font-size: 12px; pointer-events: none;
+        box-shadow: 2px 2px 6px rgba(0,0,0,0.15); display: none;
+        max-width: 280px; z-index: 1000;
+    }}
+    </style>
+    </head>
+    <body>
+    <div id="container">
+      <div id="graph-wrap">
+        <div id="graph-stats">{_n_nodes} nodes &nbsp;·&nbsp; {_n_edges} edges</div>
+        <div id="graph-hint">Scroll to zoom &nbsp;·&nbsp; Drag to pan &nbsp;·&nbsp; Click node to explore &nbsp;·&nbsp; Drag node to reposition</div>
+      </div>
+      <div id="detail-panel">
+        <div id="detail-header">Communications <span id="detail-name" style="color:#555;font-weight:normal"></span></div>
+        <div id="detail-body"><div id="detail-empty">Click a node to see its communications</div></div>
+      </div>
+    </div>
+    <div class="tooltip" id="tooltip"></div>
 
-    fig_comm_network.update_layout(
-        title=dict(
-            text='<b>Communication Network</b><br><sup>Who talks to whom? Edge thickness = message frequency</sup>',
-            x=0.5
-        ),
-        showlegend=True,
-        legend=dict(
-            yanchor="top", y=0.99,
-            xanchor="left", x=0.01,
-            bgcolor='rgba(255,255,255,0.8)'
-        ),
-        hovermode='closest',
-        xaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
-        yaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
-        height=700,
-        plot_bgcolor='#fafafa',
-        margin=dict(l=20, r=20, t=80, b=20)
-    )
+    <script>
+    try {{
 
-    fig_comm_network
+    var nodesData  = {_nodes_json};
+    var linksData  = {_edges_json};
+    var nodeColors = {_node_colors_json};
+
+    // ── Node radius (scales with total activity) ──────────────────────
+    var nodeMap = {{}};
+    nodesData.forEach(function(n) {{ nodeMap[n.id] = n; }});
+
+    function nodeR(d) {{
+        var total = (d.total_sent || 0) + (d.total_received || 0);
+        return Math.max(10, Math.min(28, 10 + total * 0.28));
+    }}
+
+    // ── SVG setup ─────────────────────────────────────────────────────
+    var wrap   = document.getElementById("graph-wrap");
+    var width  = wrap.offsetWidth || 720;
+    var height = 740;
+
+    var svg = d3.select("#graph-wrap").append("svg")
+        .attr("width", "100%").attr("height", height);
+
+    var zoomG = svg.append("g");
+
+    svg.call(d3.zoom().scaleExtent([0.15, 4]).on("zoom", function(event) {{
+        zoomG.attr("transform", event.transform);
+    }}));
+
+    // ── Arrow marker ──────────────────────────────────────────────────
+    var defs = svg.append("defs");
+    defs.append("marker")
+        .attr("id", "comm-arrow")
+        .attr("viewBox", "0 -5 10 10")
+        .attr("refX", 0).attr("refY", 0)
+        .attr("markerWidth", 5).attr("markerHeight", 5)
+        .attr("orient", "auto")
+        .append("path").attr("d", "M0,-5L10,0L0,5").attr("fill", "#aaa");
+
+    // ── Force simulation ──────────────────────────────────────────────
+    var simulation = d3.forceSimulation(nodesData)
+        .force("link", d3.forceLink(linksData).id(function(d) {{ return d.id; }}).distance(150))
+        .force("charge", d3.forceManyBody().strength(-420))
+        .force("center", d3.forceCenter(width / 2, height / 2))
+        .force("collide", d3.forceCollide(function(d) {{ return nodeR(d) + 12; }}));
+
+    // ── Edges ─────────────────────────────────────────────────────────
+    var edgeSel = zoomG.append("g").selectAll("path")
+        .data(linksData).enter().append("path")
+        .attr("fill", "none")
+        .attr("stroke", "#bbb")
+        .attr("stroke-width", function(d) {{ return Math.min(1.5 + d.weight * 0.35, 10); }})
+        .attr("opacity", 0.55)
+        .attr("marker-end", "url(#comm-arrow)");
+
+    // ── Nodes ─────────────────────────────────────────────────────────
+    var nodeSel = zoomG.append("g").selectAll("g")
+        .data(nodesData).enter().append("g")
+        .style("cursor", "pointer")
+        .call(d3.drag()
+            .on("start", function(event, d) {{
+                if (!event.active) simulation.alphaTarget(0.3).restart();
+                d.fx = d.x; d.fy = d.y;
+            }})
+            .on("drag",  function(event, d) {{ d.fx = event.x; d.fy = event.y; }})
+            .on("end",   function(event, d) {{
+                if (!event.active) simulation.alphaTarget(0);
+                d.fx = null; d.fy = null;
+            }})
+        );
+
+    nodeSel.append("circle")
+        .attr("r", nodeR)
+        .attr("fill", function(d) {{ return nodeColors[d.sub_type] || "#ccc"; }})
+        .attr("stroke", "#fff").attr("stroke-width", 2.5);
+
+    nodeSel.append("text")
+        .attr("text-anchor", "middle")
+        .style("font-size", "10px").style("pointer-events", "none")
+        .style("fill", "#333").style("font-family", "'Segoe UI', sans-serif")
+        .each(function(d) {{
+            // Position label below the node circle
+            d3.select(this).attr("dy", nodeR(d) + 13);
+        }})
+        .text(function(d) {{ return d.id; }});
+
+    // ── Tooltip ───────────────────────────────────────────────────────
+    var tooltip = d3.select("#tooltip");
+
+    nodeSel
+        .on("mouseover", function(event, d) {{
+            var outMsgs = linksData.filter(function(l) {{ return l.source.id === d.id; }})
+                .reduce(function(s, l) {{ return s + l.weight; }}, 0);
+            var inMsgs  = linksData.filter(function(l) {{ return l.target.id === d.id; }})
+                .reduce(function(s, l) {{ return s + l.weight; }}, 0);
+            tooltip.style("display", "block")
+                .html(
+                    "<strong>" + d.id + "</strong>"
+                    + " <span style='color:#888;font-size:10px'>" + d.sub_type + "</span><br/>"
+                    + "<span style='color:#555'>→ Sent: <b>" + outMsgs + "</b></span>"
+                    + " &nbsp; "
+                    + "<span style='color:#555'>← Received: <b>" + inMsgs + "</b></span>"
+                )
+                .style("left", (event.clientX + 14) + "px")
+                .style("top",  (event.clientY - 20) + "px");
+        }})
+        .on("mousemove", function(event) {{
+            tooltip.style("left", (event.clientX + 14) + "px")
+                   .style("top",  (event.clientY - 20) + "px");
+        }})
+        .on("mouseout", function() {{ tooltip.style("display", "none"); }})
+        .on("click", function(event, d) {{
+            event.stopPropagation();
+            if (selectedNode === d.id) {{
+                selectedNode = null;
+                resetHighlight();
+                clearDetail();
+            }} else {{
+                selectedNode = d.id;
+                highlightEgo(d.id);
+                showDetail(d);
+            }}
+        }});
+
+    svg.on("click", function() {{ selectedNode = null; resetHighlight(); clearDetail(); }});
+
+    // ── Ego highlight ─────────────────────────────────────────────────
+    var selectedNode = null;
+
+    function highlightEgo(nodeId) {{
+        var neighbours = new Set([nodeId]);
+        linksData.forEach(function(l) {{
+            if (l.source.id === nodeId || l.target.id === nodeId) {{
+                neighbours.add(l.source.id);
+                neighbours.add(l.target.id);
+            }}
+        }});
+        nodeSel.transition().duration(200)
+            .attr("opacity", function(d) {{ return neighbours.has(d.id) ? 1.0 : 0.07; }});
+        edgeSel.transition().duration(200)
+            .attr("opacity", function(l) {{
+                return (l.source.id === nodeId || l.target.id === nodeId) ? 0.85 : 0.03;
+            }});
+        nodeSel.select("circle")
+            .attr("stroke", function(d) {{ return d.id === nodeId ? "#333" : "#fff"; }})
+            .attr("stroke-width", function(d) {{ return d.id === nodeId ? 3.5 : 2.5; }});
+    }}
+
+    function resetHighlight() {{
+        nodeSel.transition().duration(200).attr("opacity", 1);
+        edgeSel.transition().duration(200).attr("opacity", 0.55);
+        nodeSel.select("circle").attr("stroke", "#fff").attr("stroke-width", 2.5);
+    }}
+
+    // ── Detail panel ──────────────────────────────────────────────────
+    function showDetail(d) {{
+        document.getElementById("detail-name").textContent = "— " + d.id;
+
+        var sent = linksData.filter(function(l) {{ return l.source.id === d.id; }})
+            .sort(function(a, b) {{ return b.weight - a.weight; }});
+        var recv = linksData.filter(function(l) {{ return l.target.id === d.id; }})
+            .sort(function(a, b) {{ return b.weight - a.weight; }});
+
+        var totalSent = sent.reduce(function(s, l) {{ return s + l.weight; }}, 0);
+        var totalRecv = recv.reduce(function(s, l) {{ return s + l.weight; }}, 0);
+        var nodeColor = nodeColors[d.sub_type] || "#ccc";
+
+        var html =
+            "<div style='font-size:11px;color:#888;margin-bottom:8px'>"
+            + d.sub_type
+            + "</div>"
+            + "<div style='display:flex;gap:8px;margin-bottom:10px'>"
+            + "<div style='flex:1;text-align:center;padding:6px;background:#f5f5f5;border-radius:5px'>"
+            + "<div style='font-size:20px;font-weight:bold;color:" + nodeColor + "'>" + totalSent + "</div>"
+            + "<div style='font-size:10px;color:#888'>Sent</div></div>"
+            + "<div style='flex:1;text-align:center;padding:6px;background:#f5f5f5;border-radius:5px'>"
+            + "<div style='font-size:20px;font-weight:bold;color:" + nodeColor + "'>" + totalRecv + "</div>"
+            + "<div style='font-size:10px;color:#888'>Received</div></div>"
+            + "</div>";
+
+        if (sent.length > 0) {{
+            html += "<div class='section-label'>→ Sent to</div>";
+            sent.forEach(function(l) {{
+                var partnerColor = nodeColors[(nodeMap[l.target.id] || {{}}).sub_type] || "#ccc";
+                html += "<div class='partner-row'>"
+                    + "<span class='dir'>→</span>"
+                    + "<span class='pname'>" + l.target.id + "</span>"
+                    + "<span class='count' style='background:" + partnerColor + "'>" + l.weight + "</span>"
+                    + "</div>";
+            }});
+        }}
+
+        if (recv.length > 0) {{
+            html += "<div class='section-label'>← Received from</div>";
+            recv.forEach(function(l) {{
+                var partnerColor = nodeColors[(nodeMap[l.source.id] || {{}}).sub_type] || "#ccc";
+                html += "<div class='partner-row'>"
+                    + "<span class='dir'>←</span>"
+                    + "<span class='pname'>" + l.source.id + "</span>"
+                    + "<span class='count' style='background:" + partnerColor + "'>" + l.weight + "</span>"
+                    + "</div>";
+            }});
+        }}
+
+        document.getElementById("detail-body").innerHTML = html;
+    }}
+
+    function clearDetail() {{
+        document.getElementById("detail-name").textContent = "";
+        document.getElementById("detail-body").innerHTML =
+            "<div id='detail-empty'>Click a node to see its communications</div>";
+    }}
+
+    // ── Tick ──────────────────────────────────────────────────────────
+    simulation.on("tick", function() {{
+        edgeSel.attr("d", function(d) {{
+            var dx = d.target.x - d.source.x;
+            var dy = d.target.y - d.source.y;
+            var dist = Math.sqrt(dx * dx + dy * dy) || 1;
+
+            // Start on source circle boundary, end short of target circle (for arrowhead)
+            var rs = nodeR(d.source) + 2;
+            var rt = nodeR(d.target) + 9;
+            var sx = d.source.x + dx / dist * rs;
+            var sy = d.source.y + dy / dist * rs;
+            var tx = d.target.x - dx / dist * rt;
+            var ty = d.target.y - dy / dist * rt;
+
+            // Curve to the right of the direction of travel — this means A→B and B→A
+            // get opposite perpendicular offsets and are always visually separated
+            var curve = 22;
+            var mx = (sx + tx) / 2 - dy / dist * curve;
+            var my = (sy + ty) / 2 + dx / dist * curve;
+
+            return "M" + sx + "," + sy + " Q" + mx + "," + my + " " + tx + "," + ty;
+        }});
+        nodeSel.attr("transform", function(d) {{
+            return "translate(" + d.x + "," + d.y + ")";
+        }});
+    }});
+
+    // ── Legend ────────────────────────────────────────────────────────
+    var legSvg = d3.select("#graph-wrap").append("svg")
+        .attr("width", "100%").attr("height", 30)
+        .style("position", "absolute").style("bottom", "28px").style("left", "0");
+
+    var nLeg = legSvg.append("g").attr("transform", "translate(10, 8)");
+    nLeg.append("text").attr("y", 9).style("font-size", "10px")
+        .style("font-weight", "bold").style("fill", "#555").text("Entity:");
+    Object.entries(nodeColors).forEach(function(e, i) {{
+        nLeg.append("circle").attr("cx", 56 + i * 100).attr("cy", 5).attr("r", 6).attr("fill", e[1]);
+        nLeg.append("text").attr("x", 65 + i * 100).attr("y", 9)
+            .style("font-size", "10px").style("fill", "#444").text(e[0]);
+    }});
+    // Edge thickness hint
+    nLeg.append("text").attr("x", 56 + Object.keys(nodeColors).length * 100).attr("y", 9)
+        .style("font-size", "10px").style("fill", "#888")
+        .text("Edge thickness = message count");
+
+    }} catch(e) {{
+        document.getElementById("graph-wrap").innerHTML =
+            "<pre style='color:red;padding:12px'>" + e.message + "\\n" + e.stack + "</pre>";
+    }}
+    </script>
+    </body>
+    </html>
+    """, width="100%", height="800px")
     return
 
 
@@ -1489,140 +1733,379 @@ def _(mo):
 
 
 @app.cell
-def _(
-    Counter,
-    all_entities,
-    go,
-    nodes_by_id,
-    nx,
-    rel_type_filter,
-    relationship_data,
-):
-    def build_rel_network(rel_types):
-        G_rel_local = nx.Graph()
-
-        filtered_rels = [r for r in relationship_data if r['type'] in rel_types]
-
-        _edge_rels = Counter()
-        for _rel in filtered_rels:
-            _e1, _e2 = _rel['entity1'], _rel['entity2']
-            if _e1 in all_entities and _e2 in all_entities:
-                _key = tuple(sorted([_e1, _e2]))
-                _edge_rels[(_key, _rel['type'])] += 1
-
-        for (_key, _rtype), _count in _edge_rels.items():
-            _e1, _e2 = _key
-            G_rel_local.add_node(_e1, sub_type=all_entities[_e1].get('sub_type'))
-            G_rel_local.add_node(_e2, sub_type=all_entities[_e2].get('sub_type'))
-
-            if G_rel_local.has_edge(_e1, _e2):
-                G_rel_local[_e1][_e2]['types'].append(_rtype)
-            else:
-                G_rel_local.add_edge(_e1, _e2, types=[_rtype])
-
-        return G_rel_local
-
-    G_rel = build_rel_network(rel_type_filter.value)
-
-    if len(G_rel.nodes()) > 0:
-        pos_rel = nx.spring_layout(G_rel, k=3, iterations=50, seed=42)
-    else:
-        pos_rel = {}
-
-    _rel_color_map = {
-        'Colleagues': '#2ECC71',
-        'Operates': '#3498DB',
-        'Reports': '#9B59B6',
-        'Coordinates': '#F39C12',
-        'Suspicious': '#E74C3C',
-        'Friends': '#1ABC9C',
-        'Unfriendly': '#C0392B',
+def _(all_entities, json_lib, mo, rel_type_filter, relationship_data):
+    _edge_color_map = {
+        'Colleagues':       '#2ECC71',
+        'Operates':         '#3498DB',
+        'Reports':          '#9B59B6',
+        'Coordinates':      '#F39C12',
+        'Suspicious':       '#E74C3C',
+        'Friends':          '#1ABC9C',
+        'Unfriendly':       '#C0392B',
+        'AccessPermission': '#7F8C8D',
+        'Jurisdiction':     '#BDC3C7',
     }
-
     _node_color_map = {
-        'Person': '#4ECDC4',
-        'Vessel': '#FF6B6B',
+        'Person':       '#4ECDC4',
+        'Vessel':       '#FF6B6B',
         'Organization': '#95E1D3',
-        'Group': '#F38181'
+        'Group':        '#F38181',
     }
 
-    _rel_edge_traces = []
-    for _rtype in rel_type_filter.value:
-        _x_edges, _y_edges = [], []
-        for _u, _v, _data in G_rel.edges(data=True):
-            if _rtype in _data['types']:
-                _x0, _y0 = pos_rel[_u]
-                _x1, _y1 = pos_rel[_v]
-                _x_edges.extend([_x0, _x1, None])
-                _y_edges.extend([_y0, _y1, None])
+    # Filter to selected relationship types and entities present in all_entities
+    _filtered_rels = [
+        r for r in relationship_data
+        if r['type'] in rel_type_filter.value
+        and r['entity1'] in all_entities
+        and r['entity2'] in all_entities
+    ]
 
-        if _x_edges:
-            _trace = go.Scatter(
-                x=_x_edges, y=_y_edges,
-                mode='lines',
-                line=dict(width=2, color=_rel_color_map.get(_rtype, 'gray')),
-                name=_rtype,
-                hoverinfo='none'
-            )
-            _rel_edge_traces.append(_trace)
+    # Build node list from entities that appear in at least one filtered edge
+    _node_ids = set()
+    for _r in _filtered_rels:
+        _node_ids.add(_r['entity1'])
+        _node_ids.add(_r['entity2'])
 
-    _rel_node_traces = []
-    for _ntype in ['Person', 'Vessel', 'Organization', 'Group']:
-        _nodes_of_type = [n for n in G_rel.nodes()
-                        if nodes_by_id.get(n, {}).get('sub_type') == _ntype]
-        if not _nodes_of_type:
-            continue
+    _nodes_data = [
+        {"id": nid, "sub_type": all_entities[nid].get("sub_type", "Unknown")}
+        for nid in _node_ids
+    ]
+    _edges_data = [
+        {
+            "source": r['entity1'],
+            "target": r['entity2'],
+            "type":   r['type'],
+            "bidirectional": r['bidirectional'],
+        }
+        for r in _filtered_rels
+    ]
 
-        _x_vals = [pos_rel[n][0] for n in _nodes_of_type]
-        _y_vals = [pos_rel[n][1] for n in _nodes_of_type]
+    _nodes_json      = json_lib.dumps(_nodes_data)
+    _edges_json      = json_lib.dumps(_edges_data)
+    _node_colors_json = json_lib.dumps(_node_color_map)
+    _edge_colors_json = json_lib.dumps(_edge_color_map)
+    _n_nodes = len(_nodes_data)
+    _n_edges = len(_edges_data)
 
-        _hover_texts = []
-        for _n in _nodes_of_type:
-            _neighbors = list(G_rel.neighbors(_n))
-            _rel_summary = []
-            for _nb in _neighbors:
-                _types = G_rel[_n][_nb]['types']
-                _rel_summary.append(f"  • {_nb}: {', '.join(_types)}")
-            _hover_text = f"<b>{_n}</b> ({_ntype})<br>Relationships:<br>" + "<br>".join(_rel_summary[:10])
-            if len(_rel_summary) > 10:
-                _hover_text += f"<br>  ...and {len(_rel_summary)-10} more"
-            _hover_texts.append(_hover_text)
+    mo.iframe(f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+    * {{ box-sizing: border-box; }}
+    body {{ margin: 0; font-family: 'Segoe UI', sans-serif; background: #fafafa; }}
+    #container {{ display: flex; width: 100%; height: 740px; }}
+    #graph-wrap {{ flex: 1; height: 100%; background: white; overflow: hidden; position: relative; }}
+    #detail-panel {{
+        width: 280px; height: 100%; background: white;
+        border-left: 2px solid #ddd; display: flex; flex-direction: column;
+    }}
+    #detail-header {{
+        padding: 8px 12px; background: #f0f0f0; border-bottom: 1px solid #ddd;
+        font-weight: bold; font-size: 13px; flex-shrink: 0;
+    }}
+    #detail-body {{ flex: 1; overflow-y: auto; padding: 10px 12px; }}
+    #detail-empty {{ color: #aaa; font-size: 13px; text-align: center; margin-top: 60px; }}
+    .rel-row {{
+        padding: 6px 8px; margin: 4px 0; border-radius: 6px;
+        background: #f9f9f9; font-size: 12px; border-left: 4px solid #ccc;
+    }}
+    .rel-row .other {{ font-weight: bold; }}
+    .rel-row .rtype {{ font-size: 10px; color: white; padding: 1px 5px;
+                       border-radius: 3px; display: inline-block; margin-left: 4px; }}
+    .rel-row .dir {{ color: #888; font-size: 11px; margin: 0 4px; }}
+    #graph-stats {{
+        position: absolute; top: 8px; left: 10px; font-size: 11px; color: #666;
+        background: rgba(255,255,255,0.85); padding: 3px 8px;
+        border-radius: 4px; border: 1px solid #eee; pointer-events: none;
+    }}
+    #graph-hint {{
+        position: absolute; bottom: 8px; left: 10px; font-size: 10px; color: #aaa;
+        pointer-events: none;
+    }}
+    .tooltip {{
+        position: fixed; background: white; border: 1px solid #ccc; border-radius: 6px;
+        padding: 8px 12px; font-size: 12px; pointer-events: none;
+        box-shadow: 2px 2px 6px rgba(0,0,0,0.15); display: none;
+        max-width: 300px; z-index: 1000;
+    }}
+    </style>
+    </head>
+    <body>
+    <div id="container">
+      <div id="graph-wrap">
+        <div id="graph-stats">{_n_nodes} nodes &nbsp;·&nbsp; {_n_edges} edges</div>
+        <div id="graph-hint">Scroll to zoom &nbsp;·&nbsp; Drag to pan &nbsp;·&nbsp; Click node to explore &nbsp;·&nbsp; Drag node to reposition</div>
+      </div>
+      <div id="detail-panel">
+        <div id="detail-header">Relationships <span id="detail-name" style="color:#555;font-weight:normal"></span></div>
+        <div id="detail-body"><div id="detail-empty">Click a node to see its relationships</div></div>
+      </div>
+    </div>
+    <div class="tooltip" id="tooltip"></div>
 
-        _trace = go.Scatter(
-            x=_x_vals, y=_y_vals,
-            mode='markers+text',
-            marker=dict(
-                size=20,
-                color=_node_color_map[_ntype],
-                line=dict(width=2, color='white')
-            ),
-            text=_nodes_of_type,
-            textposition='top center',
-            textfont=dict(size=9),
-            hoverinfo='text',
-            hovertext=_hover_texts,
-            name=f'{_ntype}s',
-            legendgroup='nodes'
-        )
-        _rel_node_traces.append(_trace)
+    <script>
+    try {{
 
-    fig_rel_network = go.Figure(data=_rel_edge_traces + _rel_node_traces)
+    var nodesData   = {_nodes_json};
+    var linksData   = {_edges_json};
+    var nodeColors  = {_node_colors_json};
+    var edgeColors  = {_edge_colors_json};
 
-    fig_rel_network.update_layout(
-        title=dict(
-            text='<b>Formal Relationship Network</b><br><sup>Structural connections between entities (colored by relationship type)</sup>',
-            x=0.5
-        ),
-        showlegend=True,
-        legend=dict(yanchor="top", y=0.99, xanchor="left", x=0.01),
-        xaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
-        yaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
-        height=700,
-        plot_bgcolor='#fafafa',
-        margin=dict(l=20, r=20, t=80, b=20)
-    )
+    // ── pair offset bookkeeping for parallel edges ──────────────────────
+    var pairCount = {{}};
+    linksData.forEach(function(l) {{
+        var key = [l.source, l.target].sort().join("|||");
+        pairCount[key] = (pairCount[key] || 0) + 1;
+    }});
+    var pairCur = {{}};
+    linksData.forEach(function(l) {{
+        var key = [l.source, l.target].sort().join("|||");
+        l._pairIndex = pairCur[key] || 0;
+        l._pairCount = pairCount[key];
+        pairCur[key] = (pairCur[key] || 0) + 1;
+    }});
 
-    fig_rel_network
+    // ── SVG setup ────────────────────────────────────────────────────────
+    var wrap   = document.getElementById("graph-wrap");
+    var width  = wrap.offsetWidth || 720;
+    var height = 740;
+
+    var svg = d3.select("#graph-wrap").append("svg")
+        .attr("width", "100%").attr("height", height);
+
+    var zoomG = svg.append("g");
+
+    svg.call(d3.zoom().scaleExtent([0.2, 4]).on("zoom", function(event) {{
+        zoomG.attr("transform", event.transform);
+    }}));
+
+    // ── Arrow markers (one per relationship type) ─────────────────────
+    var defs = svg.append("defs");
+    Object.entries(edgeColors).forEach(function(e) {{
+        var rtype = e[0], color = e[1];
+        var mid = rtype.replace(/\s/g, "-");
+        defs.append("marker")
+            .attr("id", "arr-" + mid)
+            .attr("viewBox", "0 -5 10 10")
+            .attr("refX", 24).attr("refY", 0)
+            .attr("markerWidth", 5).attr("markerHeight", 5)
+            .attr("orient", "auto")
+            .append("path").attr("d", "M0,-5L10,0L0,5").attr("fill", color);
+    }});
+
+    // ── Force simulation ──────────────────────────────────────────────
+    var simulation = d3.forceSimulation(nodesData)
+        .force("link", d3.forceLink(linksData).id(function(d) {{ return d.id; }}).distance(130))
+        .force("charge", d3.forceManyBody().strength(-380))
+        .force("center", d3.forceCenter(width / 2, height / 2))
+        .force("collide", d3.forceCollide(32));
+
+    // ── Edges ─────────────────────────────────────────────────────────
+    var edgeSel = zoomG.append("g").selectAll("path")
+        .data(linksData).enter().append("path")
+        .attr("fill", "none")
+        .attr("stroke", function(d) {{ return edgeColors[d.type] || "#bbb"; }})
+        .attr("stroke-width", 2)
+        .attr("opacity", 0.65)
+        .attr("marker-end", function(d) {{
+            return d.bidirectional ? null
+                : "url(#arr-" + d.type.replace(/\s/g, "-") + ")";
+        }});
+
+    // ── Nodes ─────────────────────────────────────────────────────────
+    var nodeSel = zoomG.append("g").selectAll("g")
+        .data(nodesData).enter().append("g")
+        .style("cursor", "pointer")
+        .call(d3.drag()
+            .on("start", function(event, d) {{
+                if (!event.active) simulation.alphaTarget(0.3).restart();
+                d.fx = d.x; d.fy = d.y;
+            }})
+            .on("drag", function(event, d) {{ d.fx = event.x; d.fy = event.y; }})
+            .on("end",  function(event, d) {{
+                if (!event.active) simulation.alphaTarget(0);
+                d.fx = null; d.fy = null;
+            }})
+        );
+
+    nodeSel.append("circle")
+        .attr("r", 14)
+        .attr("fill", function(d) {{ return nodeColors[d.sub_type] || "#ccc"; }})
+        .attr("stroke", "#fff").attr("stroke-width", 2.5);
+
+    nodeSel.append("text")
+        .attr("dy", 27).attr("text-anchor", "middle")
+        .style("font-size", "10px").style("pointer-events", "none")
+        .style("fill", "#333").style("font-family", "'Segoe UI', sans-serif")
+        .text(function(d) {{ return d.id; }});
+
+    // ── Tooltip ───────────────────────────────────────────────────────
+    var tooltip = d3.select("#tooltip");
+
+    nodeSel
+        .on("mouseover", function(event, d) {{
+            if (selectedNode !== null && selectedNode !== d.id) return;
+            var conn = linksData.filter(function(l) {{
+                return l.source.id === d.id || l.target.id === d.id;
+            }});
+            var lines = conn.map(function(l) {{
+                var other = l.source.id === d.id ? l.target.id : l.source.id;
+                var dir   = l.bidirectional ? "↔" : (l.source.id === d.id ? "→" : "←");
+                var col   = edgeColors[l.type] || "#999";
+                return "<span style='color:" + col + "'>■</span> <b>" + l.type + "</b> " + dir + " " + other;
+            }}).join("<br/>");
+            tooltip.style("display", "block")
+                .html("<strong>" + d.id + "</strong> <span style='color:#888;font-size:10px'>" + d.sub_type + "</span><br/><br/>" + lines)
+                .style("left", (event.clientX + 14) + "px")
+                .style("top",  (event.clientY - 20) + "px");
+        }})
+        .on("mousemove", function(event) {{
+            tooltip.style("left", (event.clientX + 14) + "px")
+                   .style("top",  (event.clientY - 20) + "px");
+        }})
+        .on("mouseout", function() {{ tooltip.style("display", "none"); }})
+        .on("click", function(event, d) {{
+            event.stopPropagation();
+            if (selectedNode === d.id) {{
+                selectedNode = null;
+                resetHighlight();
+                clearDetail();
+            }} else {{
+                selectedNode = d.id;
+                highlightEgo(d.id);
+                showDetail(d);
+            }}
+        }});
+
+    svg.on("click", function() {{ selectedNode = null; resetHighlight(); clearDetail(); }});
+
+    // ── Ego highlight ─────────────────────────────────────────────────
+    var selectedNode = null;
+
+    function highlightEgo(nodeId) {{
+        var neighbours = new Set([nodeId]);
+        linksData.forEach(function(l) {{
+            if (l.source.id === nodeId || l.target.id === nodeId) {{
+                neighbours.add(l.source.id);
+                neighbours.add(l.target.id);
+            }}
+        }});
+        nodeSel.transition().duration(200)
+            .attr("opacity", function(d) {{ return neighbours.has(d.id) ? 1.0 : 0.08; }});
+        edgeSel.transition().duration(200)
+            .attr("opacity", function(l) {{
+                return (l.source.id === nodeId || l.target.id === nodeId) ? 0.85 : 0.04;
+            }});
+        // Bold ring on selected node
+        nodeSel.select("circle")
+            .attr("stroke", function(d) {{ return d.id === nodeId ? "#333" : "#fff"; }})
+            .attr("stroke-width", function(d) {{ return d.id === nodeId ? 3.5 : 2.5; }});
+    }}
+
+    function resetHighlight() {{
+        nodeSel.transition().duration(200).attr("opacity", 1);
+        edgeSel.transition().duration(200).attr("opacity", 0.65);
+        nodeSel.select("circle").attr("stroke", "#fff").attr("stroke-width", 2.5);
+    }}
+
+    // ── Detail panel ──────────────────────────────────────────────────
+    function showDetail(d) {{
+        document.getElementById("detail-name").textContent = "— " + d.id;
+        var conn = linksData.filter(function(l) {{
+            return l.source.id === d.id || l.target.id === d.id;
+        }});
+        // sort: suspicious first, then alphabetical by type
+        conn.sort(function(a, b) {{
+            if (a.type === "Suspicious" && b.type !== "Suspicious") return -1;
+            if (b.type === "Suspicious" && a.type !== "Suspicious") return  1;
+            return a.type.localeCompare(b.type);
+        }});
+        var html = "<div style='font-size:11px;color:#888;margin-bottom:6px'>"
+            + d.sub_type + " &nbsp;·&nbsp; " + conn.length + " relationship" + (conn.length !== 1 ? "s" : "")
+            + "</div>";
+        conn.forEach(function(l) {{
+            var other = l.source.id === d.id ? l.target.id : l.source.id;
+            var otherType = "";
+            nodesData.forEach(function(n) {{ if (n.id === other) otherType = n.sub_type; }});
+            var dir   = l.bidirectional ? "↔" : (l.source.id === d.id ? "→" : "←");
+            var col   = edgeColors[l.type] || "#999";
+            html += "<div class='rel-row' style='border-left-color:" + col + "'>"
+                + "<span class='rtype' style='background:" + col + "'>" + l.type + "</span>"
+                + " <span class='dir'>" + dir + "</span>"
+                + "<span class='other'>" + other + "</span>"
+                + " <span style='color:#aaa;font-size:10px'>(" + otherType + ")</span>"
+                + "</div>";
+        }});
+        var body = document.getElementById("detail-body");
+        body.innerHTML = html;
+    }}
+
+    function clearDetail() {{
+        document.getElementById("detail-name").textContent = "";
+        document.getElementById("detail-body").innerHTML =
+            "<div id='detail-empty'>Click a node to see its relationships</div>";
+    }}
+
+    // ── Tick ──────────────────────────────────────────────────────────
+    simulation.on("tick", function() {{
+        edgeSel.attr("d", function(d) {{
+            var dx = d.target.x - d.source.x;
+            var dy = d.target.y - d.source.y;
+            var dist = Math.sqrt(dx * dx + dy * dy) || 1;
+            if (d._pairCount > 1) {{
+                var offset = (d._pairIndex - (d._pairCount - 1) / 2) * 14;
+                var mx = (d.source.x + d.target.x) / 2 + (-dy / dist) * offset;
+                var my = (d.source.y + d.target.y) / 2 + (dx  / dist) * offset;
+                return "M" + d.source.x + "," + d.source.y
+                     + " Q" + mx + "," + my
+                     + " " + d.target.x + "," + d.target.y;
+            }}
+            return "M" + d.source.x + "," + d.source.y
+                 + " L" + d.target.x + "," + d.target.y;
+        }});
+        nodeSel.attr("transform", function(d) {{
+            return "translate(" + d.x + "," + d.y + ")";
+        }});
+    }});
+
+    // ── Legends ───────────────────────────────────────────────────────
+    var legSvg = d3.select("#graph-wrap").append("svg")
+        .attr("width", "100%").attr("height", 56)
+        .style("position", "absolute").style("bottom", "28px").style("left", "0");
+
+    // Node type legend
+    var nodeTypes = Object.entries(nodeColors);
+    var nLeg = legSvg.append("g").attr("transform", "translate(10, 10)");
+    nLeg.append("text").attr("y", 9).style("font-size", "10px")
+        .style("font-weight", "bold").style("fill", "#555").text("Entity:");
+    nodeTypes.forEach(function(e, i) {{
+        nLeg.append("circle").attr("cx", 56 + i * 90).attr("cy", 5).attr("r", 6).attr("fill", e[1]);
+        nLeg.append("text").attr("x", 65 + i * 90).attr("y", 9)
+            .style("font-size", "10px").style("fill", "#444").text(e[0]);
+    }});
+
+    // Edge type legend
+    var edgeTypes = Object.entries(edgeColors);
+    var eLeg = legSvg.append("g").attr("transform", "translate(10, 32)");
+    eLeg.append("text").attr("y", 9).style("font-size", "10px")
+        .style("font-weight", "bold").style("fill", "#555").text("Relation:");
+    edgeTypes.forEach(function(e, i) {{
+        eLeg.append("rect").attr("x", 58 + i * 100).attr("y", 0)
+            .attr("width", 14).attr("height", 4).attr("rx", 2).attr("fill", e[1]);
+        eLeg.append("text").attr("x", 75 + i * 100).attr("y", 9)
+            .style("font-size", "10px").style("fill", "#444").text(e[0]);
+    }});
+
+    }} catch(e) {{
+        document.getElementById("graph-wrap").innerHTML =
+            "<pre style='color:red;padding:12px'>" + e.message + "\\n" + e.stack + "</pre>";
+    }}
+    </script>
+    </body>
+    </html>
+    """, width="100%", height="800px")
     return
 
 
