@@ -449,7 +449,7 @@ def _(extract_topics_bertopic, extract_topics_tfidf, messages_df):
     else:
         print("BERTopic failed, using TF-IDF instead.")
         topics_listm, doc_topics = extract_topics_tfidf(messages_df['content'].tolist())
-    return topic_model, topics_listm
+    return doc_topics, topic_model, topics_listm
 
 
 @app.cell
@@ -477,9 +477,15 @@ def _(messages_df, topic_model):
 
 
 @app.cell
-def _(topic_model):
-    topic_model.visualize_hierarchy()
-    return
+def _(doc_topics, messages_df, pd, topics_listm):
+    # Create a dataframe with the topics X messages
+    topics_df = pd.DataFrame(doc_topics, columns=[f"Topic_{i}" for i in range(len(topics_listm))])
+    topics_df['source'] = messages_df['source']
+    # Use source as the index
+    topics_df.set_index('source', inplace=True)
+    topics_df = topics_df.groupby(topics_df.index).sum()
+    topics_df
+    return (topics_df,)
 
 
 @app.cell
@@ -501,7 +507,7 @@ def _(messages_df, topic_model):
         n_components=2,
         min_dist=0.0,
         metric="cosine",
-        random_state=42
+        random_state=42,
     ).fit_transform(embeddings)
 
     # Topic assignments
@@ -517,12 +523,18 @@ def _(messages_df, topic_model):
     plot_df["topic"] = topics
     plot_df["topic_name"] = plot_df["topic"].map(topic_name_map)
 
+
     def truncate_text(text, n=100):
         text = str(text)
         return text if len(text) <= n else text[:n] + "..."
 
-    plot_df["content_short"] = plot_df["content"].apply(truncate_text)
 
+    plot_df["content_short"] = plot_df["content"].apply(truncate_text)
+    return plot_df, px
+
+
+@app.cell
+def _(plot_df, px):
     fig = px.scatter(
         plot_df,
         x="x",
@@ -541,13 +553,15 @@ def _(messages_df, topic_model):
     )
 
     fig.update_traces(
-        customdata=plot_df[["source", "target", "content_short", "topic_name"]].to_numpy(),
+        customdata=plot_df[
+            ["source", "target", "content_short", "topic_name"]
+        ].to_numpy(),
         hovertemplate=(
-        "<b>Topic:</b> %{customdata[3]}<br>"
-        "<b>From:</b> %{customdata[0]}<br>"
-        "<b>To:</b> %{customdata[1]}<br><br>"
-        "<b>Message preview:</b><br>%{customdata[2]}<br><br>"
-        )
+            "<b>Topic:</b> %{customdata[3]}<br>"
+            "<b>From:</b> %{customdata[0]}<br>"
+            "<b>To:</b> %{customdata[1]}<br><br>"
+            "<b>Message preview:</b><br>%{customdata[2]}<br><br>"
+        ),
     )
 
     fig.update_layout(
@@ -556,6 +570,159 @@ def _(messages_df, topic_model):
     )
 
     fig.show()
+    return
+
+
+@app.cell
+def _(messages_df):
+    messages_df
+    return
+
+
+@app.cell
+def _(G, community_list):
+    node_to_community = {}
+    for i, comm in enumerate(community_list):
+        for node_id in comm:
+            name = G.nodes[node_id].get("name")
+            if name:
+                node_to_community[name] = i
+    return (node_to_community,)
+
+
+@app.cell
+def _(node_to_community, topics_df):
+    community_topics_df = topics_df.copy()
+    community_topics_df["source"] = community_topics_df.index
+    community_topics_df["community"] = community_topics_df["source"].map(node_to_community)
+    return (community_topics_df,)
+
+
+@app.cell
+def _(community_topics_df):
+    community_topic_matrix = (
+        community_topics_df
+        .drop(columns="source")
+        .groupby("community")
+        .sum()
+    )
+
+    community_topic_matrix
+    return (community_topic_matrix,)
+
+
+@app.cell
+def _(community_topic_matrix):
+    # converting to long format for visualization
+    matrix_plot_df = (
+        community_topic_matrix
+        .reset_index()
+        .melt(
+            id_vars="community",
+            var_name="topic",
+            value_name="score"
+        )
+    )
+
+    matrix_plot_df
+    return (matrix_plot_df,)
+
+
+@app.cell
+def _(alt, matrix_plot_df):
+    topic_heatmap = (
+        alt.Chart(matrix_plot_df)
+        .mark_rect()
+        .encode(
+            x=alt.X("topic:N", title="Topic"),
+            y=alt.Y("community:N", title="Community"),
+            color=alt.Color("score:Q", scale=alt.Scale(scheme="blues")),
+            tooltip=["community", "topic", "score"]
+        )
+        .properties(
+            width=500,
+            height=300,
+            title="Topic Distribution per Community"
+        )
+    )
+
+    topic_heatmap
+    return
+
+
+@app.cell
+def _(alt, community_topic_matrix):
+    community_topic_matrix_norm = community_topic_matrix.div(
+        community_topic_matrix.sum(axis=1), axis=0
+    )
+
+    norm_matrix_plot_df = (
+        community_topic_matrix_norm
+        .reset_index()
+        .melt(id_vars="community", var_name="topic", value_name="score")
+    )
+
+
+    norm_topic_heatmap = (
+        alt.Chart(norm_matrix_plot_df)
+        .mark_rect()
+        .encode(
+            x=alt.X("topic:N", title="Topic"),
+            y=alt.Y("community:N", title="Community"),
+            color=alt.Color("score:Q", scale=alt.Scale(scheme="blues")),
+            tooltip=["community", "topic", "score"]
+        )
+        .properties(
+            width=500,
+            height=300,
+            title="Topic Distribution per Community"
+        )
+    )
+
+    norm_topic_heatmap
+    return
+
+
+@app.cell
+def _(node_to_community, pd, plot_df):
+
+    plot_df["sender_community"] = plot_df["source"].map(node_to_community)
+    plot_df["recipient_community"] = plot_df["target"].map(node_to_community)
+
+    sender_view = plot_df[["topic_name", "sender_community"]].rename(
+        columns={"sender_community": "community"}
+    )
+    recipient_view = plot_df[["topic_name", "recipient_community"]].rename(
+        columns={"recipient_community": "community"}
+    )
+
+    community_topics_df2 = pd.concat([sender_view, recipient_view], ignore_index=True)
+
+    community_topic_counts = (
+        community_topics_df2
+        .groupby(["community", "topic_name"])
+        .size()
+        .reset_index(name="count")
+        .sort_values(["community", "count"], ascending=[True, False])
+    )
+    return (community_topic_counts,)
+
+
+@app.cell
+def _(community_topic_counts):
+    community_topic_counts
+    return
+
+
+@app.cell
+def _(community_topic_counts):
+    community_topic_summary = (
+        community_topic_counts
+        .groupby("community")
+        .apply(lambda x: x[["topic_name", "count"]].head(5).to_dict("records"))
+        .to_dict()
+    )
+    community_topic_summary
     return
 
 
