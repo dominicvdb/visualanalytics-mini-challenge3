@@ -1,12 +1,7 @@
 import marimo
 
-__generated_with = "0.20.2"
+__generated_with = "0.20.4"
 app = marimo.App(width="full")
-
-
-# =============================================
-# BACKGROUND & QUESTIONS
-# =============================================
 
 
 @app.cell(hide_code=True)
@@ -62,11 +57,6 @@ def _(mo):
     return
 
 
-# =============================================
-# SHARED: IMPORTS
-# =============================================
-
-
 @app.cell
 def _():
     import json as json_lib
@@ -84,9 +74,7 @@ def _():
     import time
 
     return (
-        Counter,
         alt,
-        datetime,
         defaultdict,
         go,
         json_graph,
@@ -96,14 +84,7 @@ def _():
         np,
         nx,
         pd,
-        px,
-        time,
     )
-
-
-# =============================================
-# SHARED: DATA LOADING
-# =============================================
 
 
 @app.cell
@@ -112,11 +93,6 @@ def _(json_graph, json_lib):
         graph_data = json_lib.load(_f)
     G = json_graph.node_link_graph(graph_data, edges="edges")
     return G, graph_data
-
-
-# =============================================
-# SHARED: ENTITY LOOKUPS
-# =============================================
 
 
 @app.cell
@@ -147,11 +123,6 @@ def _(graph_data):
         entity_ids_with_locations,
         nodes_by_id,
     )
-
-
-# =============================================
-# SHARED: COMMUNICATION DATA & RELATIONSHIPS
-# =============================================
 
 
 @app.cell
@@ -223,12 +194,6 @@ def _(defaultdict, entity_ids, entity_ids_with_locations, graph_data):
     return comm_events, comm_matrix, edges_from, edges_to, relationship_data
 
 
-# =============================================
-# SHARED: messages_df (unified communication DataFrame)
-# Columns: event_id, datetime, content, source (name), target (name)
-# =============================================
-
-
 @app.cell
 def _(comm_events, edges_from, edges_to, nodes_by_id, pd):
     _messages = []
@@ -248,11 +213,6 @@ def _(comm_events, edges_from, edges_to, nodes_by_id, pd):
             })
     messages_df = pd.DataFrame(_messages)
     return (messages_df,)
-
-
-# =============================================
-# QUESTION 1: Temporal Patterns & Communication Intelligence
-# =============================================
 
 
 @app.cell(hide_code=True)
@@ -1187,11 +1147,6 @@ def _(G, alt, mo, pd):
     return
 
 
-# =============================================
-# QUESTION 2.1: Interactions Between Vessels and People
-# =============================================
-
-
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
@@ -1244,7 +1199,14 @@ def _(mo):
 
 
 @app.cell
-def _(all_entities, comm_matrix, json_lib, min_comm_slider, mo, node_type_filter):
+def _(
+    all_entities,
+    comm_matrix,
+    json_lib,
+    min_comm_slider,
+    mo,
+    node_type_filter,
+):
     _node_color_map = {
         'Person':       '#4ECDC4',
         'Vessel':       '#FF6B6B',
@@ -2464,11 +2426,6 @@ def _(mo):
     return
 
 
-# =============================================
-# QUESTION 2.2 / 3: Community Detection & Topic Modeling
-# =============================================
-
-
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
@@ -2652,11 +2609,6 @@ def _(E, G, alt, community_dd, community_labels, community_list, nx, pd):
 
     _()
     return
-
-
-# =============================================
-# TOPIC MODELING
-# =============================================
 
 
 @app.cell(hide_code=True)
@@ -2872,6 +2824,31 @@ def _(messages_df, topic_model):
     )
 
     fig_umap
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(rf"""
+    ## **Findings for Question 4**
+
+    _4. Clepper suspects that Nadia Conti, who was formerly entangled in an illegal fishing scheme, may have continued illicit activity within Oceanus._
+
+        a) Through visual analytics, provide evidence that Nadia is, or is not, doing something illegal.
+
+        b) Summarize Nadia’s actions visually. Are Clepper’s suspicions justified?
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    The communication profile of Nadia Conti reveals that a significant number of her messages are sent to what appear to be pseudonyms.
+    ![alt](public/NadiaContiContactlist.png)
+    The Communication Intelligence Dashboard reveals messages sent between Naida and others, many of which have a high suspicion rating. The message categories by sender graph shows Nadia having sent two “cover story” messages, four “covert coordination” messages, and two “illegal activity” messages, strongly indicating that she is, indeed, engaged in illicit activity within Oceanus. The average suspicion risk of her messages are a 6.0 (out of 10), and she is at high risk (12, with >7 being high) of being a person of interest in illegal activities. In particular, her and Liam Thorne, whom the intelligence dashboard marks as the entity with the highest suspicion rating, share four messages between them that have an average suspicion rating of 8.0 (out of 10).
+    ![alt](public/NadiaContiCommunicationsDashboard.png)
+    """)
     return
 
 
