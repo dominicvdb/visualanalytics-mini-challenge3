@@ -17,7 +17,7 @@ git clone https://github.com/dominicvdb/visualanalytics-mini-challenge3.git
 cd visualanalytics-mini-challenge3
 
 # Install dependencies
-pip install marimo pandas numpy networkx altair scipy plotly
+pip install -r requirements.txt
 ```
 
 All pre-computed data files (LLM classifications, topic model cache) are already included in `data/`, so no additional generation steps are needed.
