@@ -6,7 +6,7 @@ app = marimo.App(width="full")
 
 @app.cell(hide_code=True)
 def _(mo):
-    mo.md(r"""
+    intro_background = mo.md(r"""
     # <center> Mini-Challenge 3 </center>
 
     ## **Team Members**
@@ -22,12 +22,12 @@ def _(mo):
 
     Our task is to develop new and novel visualizations and visual analytics approaches to help Clepper get to the bottom of this story.
     """)
-    return
+    return (intro_background,)
 
 
 @app.cell(hide_code=True)
 def _(mo):
-    mo.md(r"""
+    intro_questions = mo.md(r"""
     ## **Tasks & Questions**
 
     Clepper diligently recorded all intercepted radio communications over the last two weeks. With the help of his intern, they have analyzed their content to identify important events and relationships between key players. The result is a knowledge graph describing the last two weeks on Oceanus. Clepper and his intern have spent a large amount of time generating this knowledge graph, and they would now like some assistance using it to answer the following questions.
@@ -54,7 +54,119 @@ def _(mo):
         - Through visual analytics, provide evidence that Nadia is, or is not, doing something illegal.
         - Summarize Nadia's actions visually. Are Clepper's suspicions justified?
     """)
-    return
+    return (intro_questions,)
+
+
+@app.cell(hide_code=True)
+def _(
+    fig_timeline,
+    intro_background,
+    intro_questions,
+    mo,
+    q1_category_bar,
+    q1_dashboard,
+    q1_entity_bar,
+    q1_findings,
+    q1_heatmap,
+    q1_self_audit,
+    q2_comm_network,
+    q2_entity_dist,
+    q2_entity_profile,
+    q2_findings,
+    q2_freq_matrix,
+    q2_hourly_heatmap,
+    q2_rel_dist,
+    q2_rel_network,
+    q2_rel_table,
+    q2_stats,
+    q2_top_active,
+    q3_bipartite,
+    q3_controls,
+    q3_findings,
+    q3_force_network,
+    q3_parallel,
+    q3_pseudonym_bar,
+    q3_resolution,
+    q3_sankey,
+    q3_sim_heatmap,
+    q3_temporal,
+    q4_evidence,
+    q4_question,
+    references,
+):
+    _intro_page = mo.vstack([
+        intro_background,
+        intro_questions,
+    ])
+
+    _q1_charts = mo.vstack([
+        q1_category_bar,
+        q1_entity_bar,
+        q1_heatmap,
+    ])
+
+    _q1_page = mo.ui.tabs({
+        "Interactive Dashboard": q1_dashboard,
+        "Category Overview": _q1_charts,
+        "Self-Message Audit": q1_self_audit,
+        "Findings": q1_findings,
+    })
+
+    _q2_statistics = mo.vstack([
+        q2_stats,
+        mo.md("### Top Active Entities"),
+        q2_top_active,
+        mo.md("### Entity Type Distribution"),
+        q2_entity_dist,
+        mo.md("### Relationship Type Distribution"),
+        q2_rel_dist,
+        mo.md("### Communication Volume Over Time"),
+        fig_timeline,
+        mo.md("### Activity by Hour and Day of Week"),
+        q2_hourly_heatmap,
+    ])
+
+    _q2_page = mo.ui.tabs({
+        "Communication Network": q2_comm_network,
+        "Frequency Matrix": q2_freq_matrix,
+        "Relationship Network": q2_rel_network,
+        "Entity Profiles": mo.vstack([q2_entity_profile, q2_rel_table]),
+        "Statistics & Timeline": _q2_statistics,
+        "Findings": q2_findings,
+    })
+
+    _q3_subtabs = mo.ui.tabs({
+        "Pseudonym Detection": q3_pseudonym_bar,
+        "Bipartite Network": q3_bipartite,
+        "Similarity Heatmap": q3_sim_heatmap,
+        "Temporal Fingerprints": q3_temporal,
+        "Similarity Network": q3_force_network,
+        "Sankey Diagram": q3_sankey,
+        "Parallel Coordinates": q3_parallel,
+        "Resolution Table": q3_resolution,
+        "Findings": q3_findings,
+    })
+
+    _q3_page = mo.vstack([
+        q3_controls,
+        _q3_subtabs,
+    ])
+
+    _q4_page = mo.vstack([
+        q4_question,
+        q4_evidence,
+    ])
+
+    app_tabs = mo.ui.tabs({
+        "Introduction": _intro_page,
+        "Q1: Temporal Patterns": _q1_page,
+        "Q2: Communities & Interactions": _q2_page,
+        "Q3: Pseudonym Detection": _q3_page,
+        "Q4: Nadia Conti": _q4_page,
+        "References": references,
+    })
+    app_tabs
+    return (app_tabs,)
 
 
 @app.cell
@@ -153,7 +265,10 @@ def _(defaultdict, entity_ids, entity_ids_with_locations, graph_data):
 
         for _sender in _senders:
             for _receiver in _receivers:
-                if _sender in entity_ids or _receiver in entity_ids:
+                # AND ensures both endpoints are actors (Person/Vessel/Org/Group).
+                # OR would admit Location nodes as senders/receivers, inflating counts
+                # by ~87 phantom entries (e.g. "Nemo Reef → Mako").
+                if _sender in entity_ids and _receiver in entity_ids:
                     comm_matrix[_sender][_receiver].append({
                         'timestamp': _timestamp,
                         'content': _content,
@@ -191,7 +306,8 @@ def _(defaultdict, entity_ids, entity_ids_with_locations, graph_data):
                         'rel_id': _rel_id
                     })
 
-    print(f"Extracted {len(comm_events)} communications and {len(relationship_data)} formal relationships")
+    print(f"Extracted {len(comm_events)} communications and {len(relationship_data)} formal relationship edges")
+    print(f"  (relationship edges = entity-pair expansions of {len(_relationships_raw)} relationship nodes in the graph)")
     return comm_events, comm_matrix, edges_from, edges_to, relationship_data
 
 
@@ -217,10 +333,8 @@ def _(comm_events, edges_from, edges_to, nodes_by_id, pd):
 
 
 @app.cell(hide_code=True)
-def _(mo):
-    mo.md(r"""
-    ## Question 1: Daily Temporal Patterns in Communications
-    """)
+def _():
+    # Q1 header is now the tab label
     return
 
 
@@ -228,38 +342,363 @@ def _(mo):
 def _(pd):
     df_intents = pd.read_csv("data/categories_v2.csv")
     print(f"Loaded {len(df_intents)} classified messages")
-    df_intents.head()
+    _ = df_intents.head()
     return (df_intents,)
 
 
 @app.cell
-def _(alt, df_intents, mo):
-    _intent_bar = alt.Chart(df_intents).mark_bar().encode(
-        x=alt.X("count()", title="Number of Messages"),
-        y=alt.Y("category:N", title="Category", sort="-x"),
-        color=alt.Color("category:N", legend=None),
-    ).properties(
-        title="Overall Category Distribution",
-        width=600,
-        height=300
-    )
-    mo.vstack([mo.md("### Category Distribution"), _intent_bar])
-    return
+def _(df_intents, json_lib, mo):
+    # Aggregate data for D3
+    _cat_counts = df_intents.groupby("category").size().reset_index(name="count").sort_values("count", ascending=False)
+    _cat_data = _cat_counts.to_dict(orient="records")
 
+    _entity_cat = df_intents.groupby(["sender_name", "category"]).size().reset_index(name="count")
+    _entity_totals = _entity_cat.groupby("sender_name")["count"].sum().sort_values(ascending=False)
+    _top_entities = _entity_totals.head(25).index.tolist()
+    _entity_cat_top = _entity_cat[_entity_cat["sender_name"].isin(_top_entities)]
+    _entity_data = _entity_cat_top.to_dict(orient="records")
+    _entity_order = _top_entities
 
-@app.cell
-def _(alt, df_intents, mo):
-    _intent_entity = alt.Chart(df_intents).mark_bar().encode(
-        x=alt.X("count()", title="Count"),
-        y=alt.Y("sender_name:N", title="Entity", sort="-x"),
-        color=alt.Color("category:N", title="Category"),
-    ).properties(
-        title="Message Categories by Sender",
-        width=700,
-        height=500
-    )
-    mo.vstack([mo.md("### Category by Entity"), _intent_entity])
-    return
+    _date_cat = df_intents.groupby(["date_str", "category"]).size().reset_index(name="count")
+    _heatmap_data = _date_cat.to_dict(orient="records")
+    _dates_sorted = sorted(df_intents["date_str"].unique().tolist())
+    _cats_sorted = _cat_counts["category"].tolist()
+
+    _cat_json = json_lib.dumps(_cat_data)
+    _entity_json = json_lib.dumps(_entity_data)
+    _entity_order_json = json_lib.dumps(_entity_order)
+    _heatmap_json = json_lib.dumps(_heatmap_data)
+    _dates_json = json_lib.dumps(_dates_sorted)
+    _cats_json = json_lib.dumps(_cats_sorted)
+
+    _n_msgs = len(df_intents)
+    _n_cats = len(_cats_sorted)
+    _n_entities = len(_top_entities)
+
+    _cat_overview = mo.iframe(f"""
+<!DOCTYPE html>
+<html>
+<head>
+<script src="https://d3js.org/d3.v7.min.js"></script>
+<style>
+* {{ box-sizing: border-box; }}
+body {{ margin: 0; font-family: 'Segoe UI', sans-serif; background: #fafafa; }}
+#container {{ width: 100%; background: white; border: 1px solid #ddd; border-radius: 6px;
+              padding: 16px; overflow: hidden; }}
+#stats {{
+    font-size: 11px; color: #666; margin-bottom: 10px;
+    display: flex; gap: 16px; align-items: center;
+}}
+.stat-box {{
+    padding: 3px 10px; background: #f5f5f5; border-radius: 4px; border: 1px solid #eee;
+    text-align: center;
+}}
+.stat-val {{ font-size: 16px; font-weight: bold; color: #333; }}
+.stat-lbl {{ font-size: 9px; color: #888; }}
+#filter-msg {{
+    font-size: 12px; color: #555; margin: 6px 0;
+    padding: 4px 10px; background: #fffde7; border-radius: 4px; border: 1px solid #f0e68c;
+    display: none; cursor: pointer;
+}}
+.section-title {{
+    font-size: 13px; font-weight: bold; color: #444; margin: 14px 0 6px;
+    border-bottom: 1px solid #eee; padding-bottom: 3px;
+}}
+.tooltip {{
+    position: fixed; background: white; border: 1px solid #ccc; border-radius: 6px;
+    padding: 8px 12px; font-size: 12px; pointer-events: none;
+    box-shadow: 2px 2px 6px rgba(0,0,0,0.15); display: none;
+    max-width: 300px; z-index: 1000;
+}}
+.bar:hover {{ opacity: 0.85; cursor: pointer; }}
+.hm-cell:hover {{ stroke: #333; stroke-width: 1.5; cursor: pointer; }}
+</style>
+</head>
+<body>
+<div id="container">
+    <div id="stats">
+        <div class="stat-box"><div class="stat-val">{_n_msgs}</div><div class="stat-lbl">Messages</div></div>
+        <div class="stat-box"><div class="stat-val">{_n_cats}</div><div class="stat-lbl">Categories</div></div>
+        <div class="stat-box"><div class="stat-val">{_n_entities}</div><div class="stat-lbl">Top Senders</div></div>
+        <div style="flex:1"></div>
+        <div style="font-size:10px;color:#aaa">Click a category bar to filter &middot; Click again to reset</div>
+    </div>
+    <div id="filter-msg">Filtered: <span id="filter-cat"></span> — click to clear</div>
+    <div class="section-title">Category Distribution</div>
+    <div id="cat-chart"></div>
+    <div class="section-title">Message Categories by Sender (Top {_n_entities})</div>
+    <div id="entity-chart"></div>
+    <div class="section-title">Category Frequency Over Time</div>
+    <div id="heatmap-chart"></div>
+</div>
+<div class="tooltip" id="tooltip"></div>
+
+<script>
+try {{
+
+var catData = {_cat_json};
+var entityData = {_entity_json};
+var entityOrder = {_entity_order_json};
+var heatmapData = {_heatmap_json};
+var datesSorted = {_dates_json};
+var catsSorted = {_cats_json};
+
+var tooltip = d3.select("#tooltip");
+var filterMsg = d3.select("#filter-msg");
+var filterCat = d3.select("#filter-cat");
+
+// Color scale
+var catColors = d3.scaleOrdinal(d3.schemeTableau10).domain(catsSorted);
+
+var activeFilter = null;
+
+function setFilter(cat) {{
+    if (activeFilter === cat) {{
+        activeFilter = null;
+        filterMsg.style("display", "none");
+    }} else {{
+        activeFilter = cat;
+        filterCat.text(cat);
+        filterMsg.style("display", "block");
+    }}
+    updateAll();
+}}
+
+filterMsg.on("click", function() {{ activeFilter = null; filterMsg.style("display", "none"); updateAll(); }});
+
+// ═══ 1. CATEGORY BAR CHART ═══
+var catMargin = {{top: 5, right: 60, bottom: 5, left: 160}};
+var catW = 700, catBarH = 24;
+var catH = catData.length * catBarH + catMargin.top + catMargin.bottom;
+
+var catSvg = d3.select("#cat-chart").append("svg")
+    .attr("width", catW).attr("height", catH);
+var catG = catSvg.append("g").attr("transform", "translate(" + catMargin.left + "," + catMargin.top + ")");
+
+var catX = d3.scaleLinear().range([0, catW - catMargin.left - catMargin.right]);
+var catY = d3.scaleBand().range([0, catH - catMargin.top - catMargin.bottom]).padding(0.15);
+
+function drawCatBars() {{
+    var data = catData;
+    var maxVal = d3.max(data, function(d) {{ return d.count; }});
+    catX.domain([0, maxVal]);
+    catY.domain(data.map(function(d) {{ return d.category; }}));
+
+    var bars = catG.selectAll(".cat-bar-g").data(data, function(d) {{ return d.category; }});
+    var enter = bars.enter().append("g").attr("class", "cat-bar-g");
+
+    enter.append("rect").attr("class", "bar");
+    enter.append("text").attr("class", "bar-label");
+    enter.append("text").attr("class", "bar-count");
+
+    var merged = enter.merge(bars);
+
+    merged.select("rect.bar")
+        .attr("x", 0)
+        .attr("y", function(d) {{ return catY(d.category); }})
+        .attr("height", catY.bandwidth())
+        .transition().duration(300)
+        .attr("width", function(d) {{ return catX(d.count); }})
+        .attr("fill", function(d) {{ return catColors(d.category); }})
+        .attr("opacity", function(d) {{ return (!activeFilter || activeFilter === d.category) ? 1 : 0.2; }});
+
+    merged.select("text.bar-label")
+        .attr("x", -6)
+        .attr("y", function(d) {{ return catY(d.category) + catY.bandwidth() / 2; }})
+        .attr("dy", "0.35em")
+        .attr("text-anchor", "end")
+        .style("font-size", "11px")
+        .style("fill", function(d) {{ return (!activeFilter || activeFilter === d.category) ? "#333" : "#bbb"; }})
+        .text(function(d) {{ return d.category; }});
+
+    merged.select("text.bar-count")
+        .attr("y", function(d) {{ return catY(d.category) + catY.bandwidth() / 2; }})
+        .attr("dy", "0.35em")
+        .style("font-size", "11px")
+        .style("font-weight", "bold")
+        .style("fill", function(d) {{ return (!activeFilter || activeFilter === d.category) ? "#333" : "#ccc"; }})
+        .transition().duration(300)
+        .attr("x", function(d) {{ return catX(d.count) + 5; }})
+        .text(function(d) {{ return d.count; }});
+
+    merged.select("rect.bar")
+        .on("click", function(event, d) {{ setFilter(d.category); }})
+        .on("mouseover", function(event, d) {{
+            tooltip.style("display", "block")
+                .html("<strong>" + d.category + "</strong><br/>" + d.count + " messages (" + (100*d.count/{_n_msgs}).toFixed(1) + "%)")
+                .style("left", (event.clientX + 14) + "px")
+                .style("top", (event.clientY - 20) + "px");
+        }})
+        .on("mouseout", function() {{ tooltip.style("display", "none"); }});
+
+    bars.exit().remove();
+}}
+
+// ═══ 2. ENTITY STACKED BAR CHART ═══
+var entMargin = {{top: 5, right: 30, bottom: 5, left: 160}};
+var entBarH = 20;
+var entW = 700;
+
+var entSvg = d3.select("#entity-chart").append("svg").attr("width", entW);
+var entG = entSvg.append("g").attr("transform", "translate(" + entMargin.left + "," + entMargin.top + ")");
+
+var entX = d3.scaleLinear().range([0, entW - entMargin.left - entMargin.right]);
+var entY = d3.scaleBand().padding(0.12);
+
+function drawEntityBars() {{
+    // Aggregate per entity
+    var filteredData = activeFilter
+        ? entityData.filter(function(d) {{ return d.category === activeFilter; }})
+        : entityData;
+
+    var entityMap = {{}};
+    filteredData.forEach(function(d) {{
+        if (!entityMap[d.sender_name]) entityMap[d.sender_name] = {{}};
+        entityMap[d.sender_name][d.category] = (entityMap[d.sender_name][d.category] || 0) + d.count;
+    }});
+
+    var entityTotals = Object.keys(entityMap).map(function(e) {{
+        var total = 0;
+        for (var c in entityMap[e]) total += entityMap[e][c];
+        return {{entity: e, total: total, cats: entityMap[e]}};
+    }}).sort(function(a, b) {{ return b.total - a.total; }}).slice(0, 25);
+
+    var entH = entityTotals.length * entBarH + entMargin.top + entMargin.bottom;
+    entSvg.attr("height", entH);
+    entY.range([0, entH - entMargin.top - entMargin.bottom]);
+
+    var maxTotal = d3.max(entityTotals, function(d) {{ return d.total; }}) || 1;
+    entX.domain([0, maxTotal]);
+    entY.domain(entityTotals.map(function(d) {{ return d.entity; }}));
+
+    // Build stacked segments
+    var segments = [];
+    entityTotals.forEach(function(ent) {{
+        var x0 = 0;
+        var catsUsed = activeFilter ? [activeFilter] : catsSorted;
+        catsUsed.forEach(function(cat) {{
+            var v = ent.cats[cat] || 0;
+            if (v > 0) {{
+                segments.push({{entity: ent.entity, category: cat, x0: x0, x1: x0 + v, count: v}});
+                x0 += v;
+            }}
+        }});
+    }});
+
+    // Labels
+    var labels = entG.selectAll(".ent-label").data(entityTotals, function(d) {{ return d.entity; }});
+    labels.exit().remove();
+    var labelsE = labels.enter().append("text").attr("class", "ent-label");
+    labelsE.merge(labels)
+        .attr("x", -6).attr("y", function(d) {{ return entY(d.entity) + entY.bandwidth()/2; }})
+        .attr("dy", "0.35em").attr("text-anchor", "end")
+        .style("font-size", "10px").style("fill", "#333")
+        .text(function(d) {{ return d.entity; }});
+
+    // Bars
+    var bars = entG.selectAll(".ent-seg").data(segments, function(d) {{ return d.entity + "-" + d.category; }});
+    bars.exit().remove();
+    var barsE = bars.enter().append("rect").attr("class", "ent-seg bar");
+    barsE.merge(bars)
+        .attr("y", function(d) {{ return entY(d.entity); }})
+        .attr("height", entY.bandwidth())
+        .attr("fill", function(d) {{ return catColors(d.category); }})
+        .transition().duration(300)
+        .attr("x", function(d) {{ return entX(d.x0); }})
+        .attr("width", function(d) {{ return Math.max(0, entX(d.x1) - entX(d.x0)); }});
+
+    entG.selectAll(".ent-seg")
+        .on("mouseover", function(event, d) {{
+            tooltip.style("display", "block")
+                .html("<strong>" + d.entity + "</strong><br/>" + d.category + ": " + d.count + " messages")
+                .style("left", (event.clientX + 14) + "px")
+                .style("top", (event.clientY - 20) + "px");
+        }})
+        .on("mouseout", function() {{ tooltip.style("display", "none"); }})
+        .on("click", function(event, d) {{ setFilter(d.category); }});
+}}
+
+// ═══ 3. HEATMAP ═══
+var hmMargin = {{top: 5, right: 30, bottom: 60, left: 160}};
+var hmCellW = 38, hmCellH = 22;
+var hmW = Math.max(700, datesSorted.length * hmCellW + hmMargin.left + hmMargin.right);
+var hmH = catsSorted.length * hmCellH + hmMargin.top + hmMargin.bottom;
+
+var hmSvg = d3.select("#heatmap-chart").append("svg")
+    .attr("width", hmW).attr("height", hmH);
+var hmG = hmSvg.append("g").attr("transform", "translate(" + hmMargin.left + "," + hmMargin.top + ")");
+
+var hmX = d3.scaleBand().domain(datesSorted).range([0, datesSorted.length * hmCellW]).padding(0.05);
+var hmY = d3.scaleBand().domain(catsSorted).range([0, catsSorted.length * hmCellH]).padding(0.05);
+
+// Axis labels
+hmG.append("g").attr("class", "hm-x-axis")
+    .attr("transform", "translate(0," + (catsSorted.length * hmCellH) + ")")
+    .call(d3.axisBottom(hmX))
+    .selectAll("text").attr("transform", "rotate(-40)").style("text-anchor", "end").style("font-size", "9px");
+
+hmG.append("g").attr("class", "hm-y-axis")
+    .call(d3.axisLeft(hmY))
+    .selectAll("text").style("font-size", "10px");
+
+function drawHeatmap() {{
+    var filtered = activeFilter
+        ? heatmapData.filter(function(d) {{ return d.category === activeFilter; }})
+        : heatmapData;
+
+    var maxCount = d3.max(filtered, function(d) {{ return d.count; }}) || 1;
+    var colorScale = d3.scaleSequential(d3.interpolateBlues).domain([0, maxCount]);
+
+    var cells = hmG.selectAll(".hm-cell").data(filtered, function(d) {{ return d.date_str + "-" + d.category; }});
+    cells.exit().transition().duration(200).attr("opacity", 0).remove();
+
+    var cellsE = cells.enter().append("rect").attr("class", "hm-cell");
+    cellsE.merge(cells)
+        .attr("x", function(d) {{ return hmX(d.date_str); }})
+        .attr("y", function(d) {{ return hmY(d.category); }})
+        .attr("width", hmX.bandwidth())
+        .attr("height", hmY.bandwidth())
+        .attr("rx", 2)
+        .transition().duration(300)
+        .attr("fill", function(d) {{ return colorScale(d.count); }})
+        .attr("opacity", 1);
+
+    hmG.selectAll(".hm-cell")
+        .on("mouseover", function(event, d) {{
+            d3.select(this).attr("stroke", "#333").attr("stroke-width", 1.5);
+            tooltip.style("display", "block")
+                .html("<strong>" + d.category + "</strong><br/>Date: " + d.date_str + "<br/>Messages: " + d.count)
+                .style("left", (event.clientX + 14) + "px")
+                .style("top", (event.clientY - 20) + "px");
+        }})
+        .on("mouseout", function() {{
+            d3.select(this).attr("stroke", "none");
+            tooltip.style("display", "none");
+        }})
+        .on("click", function(event, d) {{ setFilter(d.category); }});
+}}
+
+// ═══ UPDATE ALL ═══
+function updateAll() {{
+    drawCatBars();
+    drawEntityBars();
+    drawHeatmap();
+}}
+
+updateAll();
+
+}} catch(e) {{
+    document.getElementById("container").innerHTML = "<pre style='color:red;padding:12px'>" + e.message + "\\n" + e.stack + "</pre>";
+}}
+</script>
+</body>
+</html>
+    """, width="100%", height="1650px")
+
+    q1_category_bar = _cat_overview
+    q1_entity_bar = mo.md("")
+    q1_heatmap = mo.md("")
+    return q1_category_bar, q1_entity_bar, q1_heatmap
 
 
 @app.cell
@@ -339,7 +778,7 @@ def _(G, alt, mo, pd):
     </table></div>
     """)
 
-    mo.vstack([
+    q1_self_audit = mo.vstack([
         mo.md(f"""### Self-Message Audit: {len(_df_self)} messages where sender = receiver in graph
     These messages have the same entity as both sender and receiver in the knowledge graph,
     but the message content reveals a different actual sender (radio-style: *"RecipientName, ActualSender here..."*).
@@ -347,7 +786,7 @@ def _(G, alt, mo, pd):
         mo.hstack([_chart_actual, _chart_graph]),
         _table_html,
     ])
-    return
+    return (q1_self_audit,)
 
 
 @app.cell
@@ -1123,7 +1562,7 @@ def _(
     <div style="margin-top:2px">{_cat_html}</div>
     """)
 
-    mo.vstack([
+    q1_dashboard = mo.vstack([
         mo.md(f"### Communication Intelligence Dashboard"),
         mo.hstack([
             mo.vstack([
@@ -1133,24 +1572,18 @@ def _(
         ], justify="space-between", align="start"),
         _dashboard,
     ])
-    return
+    return (q1_dashboard,)
 
 
-@app.cell
-def _(alt, df_intents, mo):
-    _intent_heatmap = alt.Chart(df_intents).mark_rect().encode(
-        x=alt.X("date_str:O", title="Date"),
-        y=alt.Y("category:N", title="Category"),
-        color=alt.Color("count():Q", scale=alt.Scale(scheme="blues"), title="Count"),
-        tooltip=["date_str", "category", "count()"]
-    ).properties(title="Category Frequency Over Time", width=700, height=350)
-    mo.vstack([mo.md("### Category Heatmap — Date x Category"), _intent_heatmap])
+@app.cell(hide_code=True)
+def _():
+    # Heatmap now part of D3 category overview
     return
 
 
 @app.cell(hide_code=True)
 def _(mo):
-    mo.md(r"""
+    q1_findings = mo.md(r"""
     ## Key Findings Question 1
 
     1. Clepper found that messages frequently came in at around the same time each day.
@@ -1163,40 +1596,18 @@ def _(mo):
 
       For this question we choose to further investigate Mrs. Money, as her messages have an average suspicion score of 6.5, indicating that she might be involved in illegal activities. When investigating her communication network, you can see that most of her communications are with Boss and The Intern. If you then look further into the message history, it becomes quite clear that Mrs. Money reports to boss, while The Intern reports to Mrs. Money. The communications with other entities show mostly covert coordination, but no clear signs of influence.
     """)
+    return (q1_findings,)
+
+
+@app.cell(hide_code=True)
+def _():
+    # Q2.1 header is now the tab label
     return
 
 
 @app.cell(hide_code=True)
-def _(mo):
-    mo.md(r"""
-    ## Question 2.1: Understanding Interactions Between Vessels and People
-
-    - *2. Clepper has noticed that people often communicate with (or about) the same people or vessels, and that grouping them together may help with the investigation.*
-        - *a. Use visual analytics to help Clepper understand and explore the interactions and relationships between vessels and people in the knowledge graph.*
-
-    To answer these questions, I create interactive visualization to explore:
-    1. **Communication Network** - Who talks to whom and how frequently?
-    2. **Communication Frequency Matrix** - Heatmap of message intensity between entities
-    3. **Formal Relationship Network** - Structural relationships (Colleagues, Operates, Reports, etc.)
-    4. **Entity Profiles** - Deep dive into individual actors
-    5. **Communication Timeline** - Temporal patterns over the two-week period
-    6. **Key Statistics** - Summary metrics and top communicators
-    """)
-    return
-
-
-@app.cell(hide_code=True)
-def _(mo):
-    mo.md(r"""
-    ## **2. Communication Network**
-
-    In this visualization, I show the ***communication flow*** between all entities (persons, vessels, and organizations). This answers the fundamental question: **who talks to whom and how often?**
-
-    **Visual Encodings:**
-    - **Node Size** = Communication activity (larger nodes = more messages sent/received)
-    - **Edge Thickness** = Message frequency between two entities
-    - **Node Color** = Entity type (Teal = Person, Coral Red = Vessel, Mint = Organization, Salmon = Group)
-    """)
+def _():
+    # Comm network description moved into tab
     return
 
 
@@ -1213,7 +1624,6 @@ def _(mo):
         label="Minimum Communications to Show Edge:"
     )
 
-    mo.hstack([node_type_filter, min_comm_slider], justify='start', gap=2)
     return min_comm_slider, node_type_filter
 
 
@@ -1280,7 +1690,7 @@ def _(
     _n_nodes = len(_nodes_data)
     _n_edges = len(_edges_data)
 
-    mo.iframe(f"""
+    _comm_iframe = mo.iframe(f"""
     <!DOCTYPE html>
     <html>
     <head>
@@ -1610,19 +2020,18 @@ def _(
     </body>
     </html>
     """, width="100%", height="800px")
-    return
+    q2_comm_network = mo.vstack([
+        mo.hstack([node_type_filter, min_comm_slider], justify='start', gap=2),
+        _comm_iframe,
+    ])
+    return (q2_comm_network,)
 
 
 @app.cell(hide_code=True)
-def _(mo):
-    mo.md(r"""
-    ## **3. Communication Frequency Matrix (Heatmap)**
-
-    This heatmap provides a detailed overview of the ***communication intensity*** between entities. The darker the cell color, the more frequent the communication between that sender-receiver pair.
-
-    The matrix is organized with **[P] = Person, [V] = Vessel, [O] = Organization** prefixes for easy identification.
-    """)
+def _():
+    # Heatmap description moved to tab
     return
+
 
 
 @app.cell
@@ -1632,7 +2041,7 @@ def _(mo):
         value=['Person', 'Vessel'],
         label="Include Entity Types in Heatmap:"
     )
-    heatmap_type_filter
+    _ = heatmap_type_filter
     return (heatmap_type_filter,)
 
 
@@ -1682,24 +2091,19 @@ def _(all_entities, comm_matrix, go, heatmap_type_filter, np):
         margin=dict(l=150, r=50, t=100, b=150)
     )
 
-    _fig_heatmap
-    return
+    q2_freq_matrix = mo.vstack([
+        mo.md("### Communication Frequency Matrix"),
+        heatmap_type_filter,
+        _fig_heatmap,
+    ])
+    return (q2_freq_matrix,)
 
 
 @app.cell(hide_code=True)
-def _(mo):
-    mo.md(r"""
-    ## **4. Formal Relationship Network**
-
-    Beyond communications, entities in Oceanus also have ***formal relationships*** such as Colleagues, Operates, Reports, Coordinates, and Suspicious. This network visualization displays those structural connections.
-
-    - **Green** for Colleagues
-    - **Blue** for Operates
-    - **Purple** for Reports
-    - **Orange** for Coordinates
-    - **Red** for Suspicious
-    """)
+def _():
+    # Relationship network description moved to tab
     return
+
 
 
 @app.cell
@@ -1709,7 +2113,7 @@ def _(mo):
         value=['Colleagues', 'Operates', 'Reports', 'Suspicious'],
         label="Show Relationship Types:"
     )
-    rel_type_filter
+    _ = rel_type_filter
     return (rel_type_filter,)
 
 
@@ -1768,7 +2172,7 @@ def _(all_entities, json_lib, mo, rel_type_filter, relationship_data):
     _n_nodes = len(_nodes_data)
     _n_edges = len(_edges_data)
 
-    mo.iframe(f"""
+    _rel_iframe = mo.iframe(f"""
     <!DOCTYPE html>
     <html>
     <head>
@@ -1866,7 +2270,7 @@ def _(all_entities, json_lib, mo, rel_type_filter, relationship_data):
     var defs = svg.append("defs");
     Object.entries(edgeColors).forEach(function(e) {{
         var rtype = e[0], color = e[1];
-        var mid = rtype.replace(/\s/g, "-");
+        var mid = rtype.replace(/\\s/g, "-");
         defs.append("marker")
             .attr("id", "arr-" + mid)
             .attr("viewBox", "0 -5 10 10")
@@ -1892,7 +2296,7 @@ def _(all_entities, json_lib, mo, rel_type_filter, relationship_data):
         .attr("opacity", 0.65)
         .attr("marker-end", function(d) {{
             return d.bidirectional ? null
-                : "url(#arr-" + d.type.replace(/\s/g, "-") + ")";
+                : "url(#arr-" + d.type.replace(/\\s/g, "-") + ")";
         }});
 
     // ── Nodes ─────────────────────────────────────────────────────────
@@ -2087,12 +2491,17 @@ def _(all_entities, json_lib, mo, rel_type_filter, relationship_data):
     </body>
     </html>
     """, width="100%", height="800px")
-    return
+    q2_rel_network = mo.vstack([
+        mo.md("### Formal Relationship Network"),
+        rel_type_filter,
+        _rel_iframe,
+    ])
+    return (q2_rel_network,)
 
 
 @app.cell(hide_code=True)
 def _(mo):
-    mo.md(r"""
+    _ = mo.md(r"""
     ## **5. Individual Communication Profiles (Entity Deep Dive)**
 
     By selecting an entity from the dropdown, we can examine:
@@ -2110,7 +2519,7 @@ def _(all_entities, mo):
         value='Nadia Conti',
         label="Select Entity to Analyze:"
     )
-    entity_selector
+    _ = entity_selector
     return (entity_selector,)
 
 
@@ -2198,40 +2607,41 @@ def _(
 
     rel_df = pd.DataFrame(_rel_summary_data) if _rel_summary_data else pd.DataFrame(columns=['Relationship', 'Direction', 'Other Entity', 'Other Type'])
 
-    fig_entity_profile
-    return rel_df, selected_entity
+    return fig_entity_profile, rel_df, selected_entity
 
 
 @app.cell
-def _(mo, selected_entity):
-    mo.md(f"""
-    ### Formal Relationships of {selected_entity}
+def _(entity_selector, fig_entity_profile, mo, selected_entity):
+    q2_entity_profile = mo.vstack([
+        mo.md("### Entity Communication Profile"),
+        entity_selector,
+        fig_entity_profile,
+        mo.md(f"""
+### Formal Relationships of {selected_entity}
 
-    The table below shows all formal relationships that **{selected_entity}** has with other entities. The direction indicates:
-    - **↔** for bidirectional relationships (Colleagues, Friends)
-    - **→** for outgoing relationships (the entity is the source)
-    - **←** for incoming relationships (the entity is the target)
-    """)
-    return
+The table below shows all formal relationships that **{selected_entity}** has with other entities. The direction indicates:
+- **↔** for bidirectional relationships (Colleagues, Friends)
+- **→** for outgoing relationships (the entity is the source)
+- **←** for incoming relationships (the entity is the target)
+        """),
+    ])
+    return (q2_entity_profile,)
 
 
 @app.cell
 def _(mo, rel_df):
     if len(rel_df) > 0:
-        mo.ui.table(rel_df)
+        q2_rel_table = mo.ui.table(rel_df)
     else:
-        mo.md("*No formal relationships found for this entity.*")
-    return
+        q2_rel_table = mo.md("*No formal relationships found for this entity.*")
+    return (q2_rel_table,)
 
 
 @app.cell(hide_code=True)
-def _(mo):
-    mo.md(r"""
-    ## **6. Communication Timeline**
-
-    Visualizing the **temporal distribution** of communications over the two-week observation period (October 1-14, 2040).
-    """)
+def _():
+    # Timeline header moved to tab
     return
+
 
 
 @app.cell
@@ -2263,7 +2673,7 @@ def _(comm_events, go, pd):
         hovertemplate='<b>%{x|%Y-%m-%d}</b><br>Messages: %{y}<extra></extra>'
     ))
 
-    fig_timeline.update_layout(
+    _ = fig_timeline.update_layout(
         title=dict(
             text='<b>Communication Volume Over Time</b><br><sup>Daily message counts across the two-week observation period (Oct 1-14, 2040)</sup>',
             x=0.5
@@ -2276,8 +2686,7 @@ def _(comm_events, go, pd):
         plot_bgcolor='#fafafa'
     )
 
-    fig_timeline
-    return (timeline_df,)
+    return fig_timeline, timeline_df
 
 
 @app.cell
@@ -2310,16 +2719,15 @@ def _(go, timeline_df):
         yaxis=dict(tickfont=dict(size=10))
     )
 
-    fig_hourly_heatmap
-    return
+    q2_hourly_heatmap = fig_hourly_heatmap
+    return (q2_hourly_heatmap,)
 
 
 @app.cell(hide_code=True)
-def _(mo):
-    mo.md(r"""
-    ## **7. Key Statistics**
-    """)
+def _():
+    # Statistics header moved to tab
     return
+
 
 
 @app.cell
@@ -2328,12 +2736,12 @@ def _(all_entities, comm_events, mo, relationship_data):
     _total_comms = len(comm_events)
     _total_rels = len(relationship_data)
 
-    mo.hstack([
+    q2_stats = mo.hstack([
         mo.stat(value=_total_entities, label="Total Entities", bordered=True),
         mo.stat(value=_total_comms, label="Communications", bordered=True),
         mo.stat(value=_total_rels, label="Formal Relationships", bordered=True),
     ], justify='center', gap=2)
-    return
+    return (q2_stats,)
 
 
 @app.cell
@@ -2357,8 +2765,8 @@ def _(all_entities_full, comm_matrix, mo, pd):
     top_active_df['Received'] = top_active_df['Entity'].apply(lambda x: _recv_counts.get(x, 0))
     top_active_df = top_active_df[['Entity', 'Type', 'Sent', 'Received', 'Total Messages']]
 
-    mo.ui.table(top_active_df)
-    return
+    q2_top_active = mo.ui.table(top_active_df)
+    return (q2_top_active,)
 
 
 @app.cell
@@ -2388,8 +2796,8 @@ def _(all_entities, go):
         legend=dict(orientation='h', yanchor='bottom', y=-0.2, xanchor='center', x=0.5)
     )
 
-    fig_entity_distribution
-    return
+    q2_entity_dist = fig_entity_distribution
+    return (q2_entity_dist,)
 
 
 @app.cell
@@ -2421,33 +2829,31 @@ def _(go, relationship_data):
         plot_bgcolor='#fafafa'
     )
 
-    fig_rel_distribution
-    return
+    q2_rel_dist = fig_rel_distribution
+    return (q2_rel_dist,)
 
 
 @app.cell(hide_code=True)
 def _(mo):
-    mo.md(r"""
+    q2_findings = mo.md(r"""
     ## **Findings for Question 2.1**
 
-    Based on the visual analytics executed above, several key insights emerge about the interactions and relationships between vessels and people in Oceanus. The following findings are all derived directly from the data analysis.
+    Based on the visual analytics executed above, several key insights emerge about the interactions and relationships between vessels and people in Oceanus. The following findings are derived directly from the data and verified against the raw knowledge graph.
 
-    The Communication Network graph reveals that message flow is concentrated around a small number of central entities. The majority of nodes connect only through one or two links, meaning most actors communicate via intermediaries rather than directly. This hub-and-spoke structure immediately narrows Clepper's focus to the most connected nodes they are the gatekeepers of information in Oceanus.
+    The knowledge graph contains 43 entities (18 persons, 15 vessels, 5 organizations, 5 groups), of which **37 actively communicate** across the 584 intercepted messages. Six entities — Sailor Shift, Tourists, Recreational Fishing Boats, Diving Tour Operators, Conservation Vessels, and Mariner's Dream appear in the graph but send or receive no messages, suggesting they are referenced but not direct radio participants. Among the 37 active entities, the top communicators (by total messages) are: **Mako** (80 total: 29 sent, 51 received), **Green Guardians** (70: 43 sent, 27 received), **Oceanus City Council** (60: 26 sent, 34 received), **Reef Guardian** (57), and **Neptune** (54). Mako's strongly receive-heavy ratio (51 received vs 29 sent) is consistent with it functioning as an operational vessel receiving instructions from multiple coordinators rather than initiating activity.
 
-    The Frequency Heatmap (sender = row, receiver = column) shows that many entity pairs communicate in one direction only. Several person-to-vessel pairs show one side consistently sending while the other receives a pattern consistent with operator-to-vessel or supervisor-to-subordinate dynamics. Truly bilateral pairs (dark cells on both sides of the diagonal) represent closer, more collaborative relationships worth distinguishing from purely top-down ones.
+    The Communication Network graph reveals a clear hub-and-spoke topology. The majority of nodes connect only through one or two links, meaning most actors communicate via intermediaries rather than directly. This structure immediately narrows Clepper's focus to the most connected nodes, they are the gatekeepers of information in Oceanus. The Frequency Heatmap (sender = row, receiver = column) reinforces this: several person-to-vessel pairs are strongly asymmetric, with one side consistently sending while the other receives a pattern consistent with operator-to-vessel or supervisor-to-subordinate command dynamics. Truly bilateral dark cells on both sides of the diagonal represent closer, more collaborative relationships.
 
-    The Formal Relationship Network goes beyond communication frequency and reveals the underlying structural ties between entities. Among the relationship types Colleagues, Operates, Reports, Coordinates, Friends, Unfriendly the presence of Suspicious-labelled edges stands out as direct, data-grounded evidence of flagged connections. Entities that appear in both the suspicious relationship network and the high-activity communication hubs represent the most operationally significant actors for Clepper's investigation.
+    The Formal Relationship Network reveals the structural ties underlying the communication data. The 259 extracted relationship edges span nine types: Coordinates (62), AccessPermission (63), Operates (35), Colleagues (29), Suspicious (26), Reports (25), Jurisdiction (12), Unfriendly (5), Friends (2). Note: these counts represent expanded entity-pair edges derived from 259 relationship nodes in the graph, one node connecting multiple entities produces multiple edges. The 26 Suspicious-labelled edges are the most directly investigative relevant: entities appearing in both the suspicious relationship network and the top communication hubs are the highest-priority targets for Clepper's investigation.
 
-    The individual profile tool (demonstrated with Nadia Conti as default) allows Clepper to quickly characterize any actor: how many messages they sent vs. received, who their communication partners are, and what formal relationships they hold all in one view. The directional indicators (↔, →, ←) in the relationships table clarify whether Nadia is a peer, a superior, or a subordinate in each connection.
-
-    The daily bar chart shows uneven communication volume across the Oct 1–14, 2040 observation window, with certain days spiking significantly. The hour-by-day-of-week heatmap tightens this further: recurring dark cells at consistent time slots point to deliberately scheduled communication a behavioural signature that distinguishes organized coordination from casual interaction, and a key signal for Clepper to investigate further.
+    The individual profile tool (demonstrated with Nadia Conti as default) allows Clepper to quickly characterize any actor: messages sent vs. received, specific communication partners, and formal relationships — all in one view. The directional indicators (↔, →, ←) clarify whether an entity is a peer, superior, or subordinate in each connection. The daily bar chart and hour-by-day-of-week heatmap together show that activity peaks between 08:00–14:00 and is unevenly distributed across the Oct 1–14, 2040 window — recurring dark time slots indicate deliberately scheduled coordination, a key behavioural signature that distinguishes organized operations from casual interaction.
     """)
-    return
+    return (q2_findings,)
 
 
 @app.cell(hide_code=True)
 def _(mo):
-    mo.md(r"""
+    _ = mo.md(r"""
     ## Question 2.2 / 3: Community Detection & Topic Modeling
 
     ### Community Detection
@@ -2493,7 +2899,7 @@ def _(G, entity_nodes, event_nodes, nx):
 @app.cell
 def _(E, nx):
     communities = list(nx.community.greedy_modularity_communities(E, weight="weight"))
-    communities
+    _ = communities
     return (communities,)
 
 
@@ -2507,7 +2913,7 @@ def _(communities):
 @app.cell
 def _(E):
     top_edges = sorted(E.edges(data=True), key=lambda x: x[2].get("weight", 1), reverse=True)[:10]
-    top_edges
+    _ = top_edges
     return
 
 
@@ -2524,7 +2930,7 @@ def _(communities, mo):
         label="Select a community",
     )
 
-    community_dd
+    _ = community_dd
     return community_dd, community_labels, community_list
 
 
@@ -2544,7 +2950,7 @@ def _(G, community_dd, community_labels, community_list, mo, pd):
         })
 
     _df_members = pd.DataFrame(_rows).sort_values(["sub_type", "node"])
-    mo.ui.table(_df_members)
+    _ = mo.ui.table(_df_members)
     return
 
 
@@ -2626,236 +3032,47 @@ def _(E, G, alt, community_dd, community_labels, community_list, nx, pd):
         )
         return chart
 
-    _()
+    _ = _()
     return
 
 
 @app.cell(hide_code=True)
 def _(mo):
-    mo.md(r"""
+    _ = mo.md(r"""
     ### Topic Modeling
     """)
     return
 
 
 @app.cell
-def _(np):
-    from bertopic import BERTopic
-    from bertopic.representation import KeyBERTInspired
-    from sklearn.feature_extraction.text import TfidfVectorizer
+def _(pd):
+    import os as _os
 
-    def extract_topics_tfidf(texts, num_topics=15):
-        """Extract topics using TF-IDF keywords"""
-        if len(texts) < 2:
-            return [["insufficient", "data"]], [[1.0] for _ in texts]
-
-        try:
-            tfidf = TfidfVectorizer(
-                stop_words="english",
-                ngram_range=(1, 2),
-                max_features=5000,
-                min_df=2,
-                max_df=0.8,
-            )
-            tfidf_matrix = tfidf.fit_transform(texts)
-
-            doc_scores = tfidf_matrix.toarray()
-
-            feature_names = tfidf.get_feature_names_out()
-            total_scores = np.sum(doc_scores, axis=0)
-            top_indices = total_scores.argsort()[-num_topics:][::-1]
-
-            topics = [[feature_names[i]] for i in top_indices]
-
-            doc_topics = doc_scores[:, top_indices].tolist()
-
-            return topics, doc_topics
-
-        except Exception as e:
-            print(f"TF-IDF extraction failed: {str(e)}")
-            return [["error", "processing"]], [[1.0] for _ in texts]
-
-    def extract_topics_bertopic(texts, min_topic_size=5, top_n=10):
-        """Extract topics using BERTopic"""
-        if len(texts) < min_topic_size * 2:
-            min_topic_size = max(2, len(texts) // 4)
-
-        try:
-            representation_model = KeyBERTInspired()
-
-            topic_model = BERTopic(
-                min_topic_size=min_topic_size,
-                nr_topics="auto",
-                language="english",
-                calculate_probabilities=True,
-                representation_model=representation_model,
-                verbose=False,
-            )
-            topics, probs = topic_model.fit_transform(texts)
-
-            topic_keywords = {}
-            unique_topics = set(topics)
-            if -1 in unique_topics:
-                unique_topics.remove(-1)
-
-            for topic_id in unique_topics:
-                try:
-                    keywords = topic_model.get_topic(topic_id)
-                    topic_keywords[topic_id] = [word for word, _ in keywords[:top_n]]
-                except:
-                    continue
-
-            if not topic_keywords:
-                return extract_topics_tfidf(texts) + (None,)
-
-            doc_topics_list = []
-            max_topic_id = max(topic_keywords.keys()) if topic_keywords else 0
-
-            for i, doc_topic in enumerate(topics):
-                weights = [0.0] * (max_topic_id + 1)
-                if doc_topic in topic_keywords:
-                    weights[doc_topic] = 1.0
-                doc_topics_list.append(weights)
-
-            topics_list = []
-            for i in range(max_topic_id + 1):
-                if i in topic_keywords:
-                    topics_list.append(topic_keywords[i])
-                else:
-                    topics_list.append([])
-
-            return topics_list, doc_topics_list, topic_model
-        except Exception as e:
-            print(f"BERTopic failed: {str(e)}")
-            topics, doc_topics_list = extract_topics_tfidf(texts)
-            return topics, doc_topics_list, None
-
-    return extract_topics_bertopic, extract_topics_tfidf
-
-
-@app.cell
-def _(extract_topics_bertopic, extract_topics_tfidf, messages_df):
-    topics_listm, doc_topics, topic_model = extract_topics_bertopic(messages_df['content'].tolist())
-    if topic_model:
-        print(f"Extracted {len(topics_listm)} topics using BERTopic.")
+    if _os.path.exists('data/topic_plot_df.csv'):
+        plot_df = pd.read_csv('data/topic_plot_df.csv')
+        print(f"Loaded cached topic plot data: {len(plot_df)} rows")
     else:
-        print("BERTopic failed, using TF-IDF instead.")
-        topics_listm, doc_topics = extract_topics_tfidf(messages_df['content'].tolist())
-    return doc_topics, topic_model, topics_listm
-
-
-@app.cell
-def _(topics_listm):
-    topics_listm
-    return
-
-
-@app.cell
-def _(topic_model):
-    topic_model.get_topic_freq()
-    return
-
-
-@app.cell
-def _(topic_model):
-    topic_model.visualize_topics()
-    return
-
-
-@app.cell
-def _(messages_df, topic_model):
-    topic_model.visualize_documents(messages_df['content'].tolist())
-    return
-
-
-@app.cell
-def _(topic_model):
-    topic_model.visualize_hierarchy()
-    return
-
-
-@app.cell
-def _(messages_df, topic_model):
-    import plotly.express as _px
-    import umap
-    from sentence_transformers import SentenceTransformer
-
-    docs = messages_df["content"].tolist()
-
-    embedding_model = SentenceTransformer("all-MiniLM-L6-v2")
-    embeddings = embedding_model.encode(docs, show_progress_bar=True)
-
-    reduced = umap.UMAP(
-        n_neighbors=15,
-        n_components=2,
-        min_dist=0.0,
-        metric="cosine",
-        random_state=42
-    ).fit_transform(embeddings)
-
-    topics_umap, probs_umap = topic_model.transform(docs)
-
-    topic_info = topic_model.get_topic_info()[["Topic", "Name"]]
-    topic_name_map = dict(zip(topic_info["Topic"], topic_info["Name"]))
-
-    plot_df = messages_df.copy()
-    plot_df["x"] = reduced[:, 0]
-    plot_df["y"] = reduced[:, 1]
-    plot_df["topic"] = topics_umap
-    plot_df["topic_name"] = plot_df["topic"].map(topic_name_map)
-
-    def truncate_text(text, n=100):
-        text = str(text)
-        return text if len(text) <= n else text[:n] + "..."
-
-    plot_df["content_short"] = plot_df["content"].apply(truncate_text)
-
-    fig_umap = _px.scatter(
-        plot_df,
-        x="x",
-        y="y",
-        color="topic_name",
-        hover_data={
-            "source": True,
-            "target": True,
-            "content": True,
-            "topic_name": True,
-            "x": False,
-            "y": False,
-        },
-        width=1200,
-        height=800,
-    )
-
-    fig_umap.update_traces(
-        customdata=plot_df[["source", "target", "content_short", "topic_name"]].to_numpy(),
-        hovertemplate=(
-        "<b>Topic:</b> %{customdata[3]}<br>"
-        "<b>From:</b> %{customdata[0]}<br>"
-        "<b>To:</b> %{customdata[1]}<br><br>"
-        "<b>Message preview:</b><br>%{customdata[2]}<br><br>"
+        raise FileNotFoundError(
+            "data/topic_plot_df.csv not found. "
+            "Run 'python save_topic_cache.py' once to generate topic model cache."
         )
-    )
-
-    fig_umap.update_layout(
-        title="Topic Clusters",
-        legend_title="Clusters",
-    )
-
-    fig_umap
     return (plot_df,)
 
 
 @app.cell
-def _(doc_topics, messages_df, pd, topics_listm):
-    # Create a dataframe with the topics X messages
-    topics_df = pd.DataFrame(doc_topics, columns=[f"Topic_{i}" for i in range(len(topics_listm))])
-    topics_df['source'] = messages_df['source']
-    # Use source as the index
-    topics_df.set_index('source', inplace=True)
-    topics_df = topics_df.groupby(topics_df.index).sum()
-    topics_df
+def _(pd):
+    import os as _os
+
+    if _os.path.exists('data/topics_df.csv'):
+        topics_df = pd.read_csv('data/topics_df.csv', index_col=0)
+        print(f"Loaded cached topics matrix: {topics_df.shape}")
+    else:
+        raise FileNotFoundError(
+            "data/topics_df.csv not found. "
+            "Run 'python save_topic_cache.py' once to generate topic model cache."
+        )
     return (topics_df,)
+
 
 
 @app.cell
@@ -2886,7 +3103,7 @@ def _(community_topics_df):
         .sum()
     )
 
-    community_topic_matrix
+    _ = community_topic_matrix
     return (community_topic_matrix,)
 
 
@@ -2903,7 +3120,7 @@ def _(community_topic_matrix):
         )
     )
 
-    matrix_plot_df
+    _ = matrix_plot_df
     return (matrix_plot_df,)
 
 
@@ -2925,7 +3142,7 @@ def _(alt, matrix_plot_df):
         )
     )
 
-    topic_heatmap
+    _ = topic_heatmap
     return
 
 
@@ -2958,7 +3175,7 @@ def _(alt, community_topic_matrix):
         )
     )
 
-    norm_topic_heatmap
+    _ = norm_topic_heatmap
     return
 
 
@@ -2989,7 +3206,7 @@ def _(node_to_community, pd, plot_df):
 
 @app.cell
 def _(community_topic_counts):
-    community_topic_counts
+    _ = community_topic_counts
     return
 
 
@@ -3001,7 +3218,7 @@ def _(community_topic_counts):
         .apply(lambda x: x[["topic_name", "count"]].head(5).to_dict("records"))
         .to_dict()
     )
-    community_topic_summary
+    _ = community_topic_summary
     return
 
 
@@ -3044,7 +3261,7 @@ def _(defaultdict, edges_from, edges_to, entity_ids, graph_data):
 
 @app.cell(hide_code=True)
 def _(mo):
-    mo.md(r"""
+    _ = mo.md(r"""
     ## Interactive Dashboard Controls
 
     The controls below filter **all visualizations simultaneously**, implementing the coordinated multiple views paradigm (Heer & Shneiderman, 2012). This enables cross-referencing patterns: for example, adjusting the similarity threshold updates both the network visualization AND the resolution candidates table.
@@ -3068,13 +3285,13 @@ def _(mo):
         label="Entity Types to Include"
     )
 
-    mo.hstack([sim_threshold, show_pseudonyms_only, entity_type_filter], justify="start", gap=2)
-    return entity_type_filter, show_pseudonyms_only, sim_threshold
+    q3_controls = mo.hstack([sim_threshold, show_pseudonyms_only, entity_type_filter], justify="start", gap=2)
+    return entity_type_filter, q3_controls, show_pseudonyms_only, sim_threshold
 
 
 @app.cell(hide_code=True)
 def _(mo):
-    mo.md(r"""
+    _ = mo.md(r"""
     ---
 
     ## 1. Pseudonym Detection via Naming Pattern Analysis
@@ -3164,17 +3381,17 @@ def _(go, likely_pseudonyms, mo):
         bargap=0.3
     )
 
-    mo.vstack([
+    q3_pseudonym_bar = mo.vstack([
         mo.md("### Visualization 1: Pseudonym Detection Results"),
         mo.md(f"**Summary**: Detected **{len(likely_pseudonyms)}** entities with pseudonym-like naming patterns. The role-based naming convention ('The Lookout', 'The Accountant', etc.) suggests an **organized operational hierarchy**."),
         fig_pseudo_bar
     ])
-    return
+    return (q3_pseudonym_bar,)
 
 
 @app.cell(hide_code=True)
 def _(mo):
-    mo.md(r"""
+    _ = mo.md(r"""
     ---
 
     ## 2. Entity Similarity Analysis via Communication Partners
@@ -3267,7 +3484,7 @@ def _(
 
 @app.cell(hide_code=True)
 def _(mo):
-    mo.md(r"""
+    _ = mo.md(r"""
     ---
 
     ## 3. Bipartite Communication Network
@@ -3291,10 +3508,9 @@ def _(mo):
 def _(
     all_entities,
     comm_records,
-    go,
+    json_lib,
     likely_pseudonyms,
     mo,
-    np,
     q3_comm_matrix,
     sim_threshold,
 ):
@@ -3303,111 +3519,350 @@ def _(
 
     # Get communication partners of pseudonyms
     _partner_ids = set()
-    _edges = []
+    _edges_raw = []
 
     for _pid in _pseudonym_ids:
         for _target, _count in q3_comm_matrix.get(_pid, {}).items():
             if _target not in _pseudonym_ids:
                 _partner_ids.add(_target)
-                _edges.append((_pid, _target, _count))
+                _edges_raw.append((_pid, _target, _count))
         for _source, _targets in q3_comm_matrix.items():
             if _pid in _targets and _source not in _pseudonym_ids:
                 _partner_ids.add(_source)
-                _edges.append((_source, _pid, _targets[_pid]))
+                _edges_raw.append((_source, _pid, _targets[_pid]))
 
-    # Position pseudonyms on left, partners on right
+    # Aggregate edges (same pair may appear twice from both loops)
+    _edge_agg = {}
+    for _s, _t, _c in _edges_raw:
+        _k = (_s, _t)
+        _edge_agg[_k] = _edge_agg.get(_k, 0) + _c
+
     _pseudo_list = sorted(list(_pseudonym_ids))
     _partner_list = sorted(list(_partner_ids))
 
-    if _pseudo_list and _partner_list:
-        _pseudo_y = np.linspace(0, 1, len(_pseudo_list)) if len(_pseudo_list) > 1 else [0.5]
-        _partner_y = np.linspace(0, 1, len(_partner_list)) if len(_partner_list) > 1 else [0.5]
+    # Build JSON data for D3
+    _nodes_d3 = []
+    for _p in _pseudo_list:
+        _label = all_entities.get(_p, {}).get('label', _p)
+        _sub = all_entities.get(_p, {}).get('sub_type', 'Unknown')
+        _sent = sum(q3_comm_matrix.get(_p, {}).values())
+        _recv = sum(1 for _r in comm_records if _r['receiver'] == _p)
+        _nodes_d3.append({"id": _p, "label": _label, "sub_type": _sub,
+                          "group": "pseudonym", "volume": _sent + _recv})
 
-        _pos = {}
-        for _i, _p in enumerate(_pseudo_list):
-            _pos[_p] = (0, _pseudo_y[_i])
-        for _i, _p in enumerate(_partner_list):
-            _pos[_p] = (1, _partner_y[_i])
+    for _p in _partner_list:
+        _label = all_entities.get(_p, {}).get('label', _p)
+        _sub = all_entities.get(_p, {}).get('sub_type', 'Unknown')
+        _sent = sum(q3_comm_matrix.get(_p, {}).values())
+        _recv = sum(1 for _r in comm_records if _r['receiver'] == _p)
+        _nodes_d3.append({"id": _p, "label": _label, "sub_type": _sub,
+                          "group": "partner", "volume": _sent + _recv})
 
-        # Compute node sizes based on message volume
-        _node_volumes = {}
-        for _eid in _pseudo_list + _partner_list:
-            _sent = sum(q3_comm_matrix.get(_eid, {}).values())
-            _recv = sum(1 for _r in comm_records if _r['receiver'] == _eid)
-            _node_volumes[_eid] = _sent + _recv
+    _edges_d3 = [{"source": _s, "target": _t, "weight": _w}
+                 for (_s, _t), _w in _edge_agg.items()]
 
-        _max_vol = max(_node_volumes.values()) if _node_volumes else 1
+    _nodes_json = json_lib.dumps(_nodes_d3)
+    _edges_json = json_lib.dumps(_edges_d3)
+    _n_pseudo = len(_pseudo_list)
+    _n_partners = len(_partner_list)
+    _n_edges = len(_edges_d3)
+    _panel_h = max(600, (len(_pseudo_list) + len(_partner_list)) * 18)
 
-        # Create figure
-        fig_bipartite = go.Figure()
+    _bipartite_viz = mo.iframe(f"""
+<!DOCTYPE html>
+<html>
+<head>
+<script src="https://d3js.org/d3.v7.min.js"></script>
+<style>
+* {{ box-sizing: border-box; }}
+body {{ margin: 0; font-family: 'Segoe UI', sans-serif; background: #fafafa; }}
+#container {{ width: 100%; height: {_panel_h}px; position: relative; background: white;
+              border: 1px solid #ddd; border-radius: 6px; overflow: hidden; }}
+#stats {{
+    position: absolute; top: 8px; left: 10px; font-size: 11px; color: #666;
+    background: rgba(255,255,255,0.9); padding: 4px 10px;
+    border-radius: 4px; border: 1px solid #eee; pointer-events: none; z-index: 10;
+}}
+#hint {{
+    position: absolute; bottom: 6px; left: 10px; font-size: 10px; color: #aaa;
+    pointer-events: none;
+}}
+#legend {{
+    position: absolute; top: 8px; right: 12px; font-size: 11px;
+    background: rgba(255,255,255,0.92); border: 1px solid #ddd;
+    border-radius: 6px; padding: 8px 12px; z-index: 10;
+}}
+.leg-row {{ display: flex; align-items: center; gap: 6px; margin: 3px 0; }}
+.leg-swatch {{ width: 12px; height: 12px; border-radius: 50%; }}
+#tooltip {{
+    position: fixed; background: white; border: 1px solid #ccc; border-radius: 6px;
+    padding: 8px 12px; font-size: 12px; pointer-events: none;
+    box-shadow: 2px 2px 6px rgba(0,0,0,0.15); display: none;
+    max-width: 320px; z-index: 1000;
+}}
+</style>
+</head>
+<body>
+<div id="container">
+    <div id="stats">{_n_pseudo} pseudonyms &nbsp;&middot;&nbsp; {_n_partners} partners &nbsp;&middot;&nbsp; {_n_edges} edges</div>
+    <div id="hint">Drag nodes to reposition &nbsp;&middot;&nbsp; Hover for details</div>
+    <div id="legend">
+        <div style="font-weight:bold;margin-bottom:4px">Node Type</div>
+        <div class="leg-row"><div class="leg-swatch" style="background:#FFD700;border:2px solid #B8860B"></div> Pseudonym</div>
+        <div class="leg-row"><div class="leg-swatch" style="background:#4ECDC4;border:1px solid #2E8B8B"></div> Partner (Person)</div>
+        <div class="leg-row"><div class="leg-swatch" style="background:#FF6B6B;border:1px solid #c44"></div> Partner (Vessel)</div>
+        <div class="leg-row"><div class="leg-swatch" style="background:#95E1D3;border:1px solid #6ab"></div> Partner (Organization)</div>
+        <div style="font-weight:bold;margin-top:6px;margin-bottom:2px">Edge</div>
+        <div class="leg-row" style="font-size:10px;color:#888">Width = message count</div>
+    </div>
+</div>
+<div id="tooltip"></div>
 
-        # Add edges
-        for _src, _tgt, _cnt in _edges:
-            if _src in _pos and _tgt in _pos:
-                _x0, _y0 = _pos[_src]
-                _x1, _y1 = _pos[_tgt]
-                fig_bipartite.add_trace(go.Scatter(
-                    x=[_x0, _x1], y=[_y0, _y1],
-                    mode='lines',
-                    line=dict(width=max(0.5, _cnt * 0.3), color='rgba(150,150,150,0.3)'),
-                    hoverinfo='none',
-                    showlegend=False
-                ))
+<script>
+try {{
 
-        # Add pseudonym nodes (left)
-        _px = [_pos[_p][0] for _p in _pseudo_list]
-        _py = [_pos[_p][1] for _p in _pseudo_list]
-        _plabels = [all_entities[_p].get('label', _p) for _p in _pseudo_list]
-        _psizes = [10 + 30 * (_node_volumes.get(_p, 0) / _max_vol) for _p in _pseudo_list]
+var nodes = {_nodes_json};
+var edges = {_edges_json};
 
-        fig_bipartite.add_trace(go.Scatter(
-            x=_px, y=_py, mode='markers+text',
-            marker=dict(size=_psizes, color='#FFD700', line=dict(width=2, color='#B8860B')),
-            text=_plabels, textposition='middle left', textfont=dict(size=10),
-            hovertemplate=[f"<b>{_plabels[_i]}</b><br>Messages: {_node_volumes.get(_pseudo_list[_i], 0)}<extra></extra>" for _i in range(len(_pseudo_list))],
-            showlegend=False
-        ))
+var partnerColors = {{
+    "Person": "#4ECDC4", "Vessel": "#FF6B6B",
+    "Organization": "#95E1D3", "Group": "#F38181"
+}};
 
-        # Add partner nodes (right)
-        _rx = [_pos[_p][0] for _p in _partner_list]
-        _ry = [_pos[_p][1] for _p in _partner_list]
-        _rlabels = [all_entities.get(_p, {}).get('label', _p) for _p in _partner_list]
-        _rsizes = [10 + 30 * (_node_volumes.get(_p, 0) / _max_vol) for _p in _partner_list]
+var container = document.getElementById("container");
+var W = container.offsetWidth || 900;
+var H = container.offsetHeight || 600;
 
-        fig_bipartite.add_trace(go.Scatter(
-            x=_rx, y=_ry, mode='markers+text',
-            marker=dict(size=_rsizes, color='#4ECDC4', line=dict(width=1, color='#2E8B8B')),
-            text=_rlabels, textposition='middle right', textfont=dict(size=9),
-            hovertemplate=[f"<b>{_rlabels[_i]}</b><br>Messages: {_node_volumes.get(_partner_list[_i], 0)}<extra></extra>" for _i in range(len(_partner_list))],
-            showlegend=False
-        ))
+var svg = d3.select("#container").append("svg")
+    .attr("width", W).attr("height", H);
 
-        fig_bipartite.update_layout(
-            title=dict(text='<b>Visualization 2: Bipartite Network Pseudonyms ↔ Communication Partners</b><br><sup>Gold = Pseudonyms (left) | Teal = Partners (right) | Edge width ∝ message count</sup>', x=0.5),
-            xaxis=dict(showgrid=False, zeroline=False, showticklabels=False, range=[-0.3, 1.3]),
-            yaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
-            height=max(500, len(_pseudo_list + _partner_list) * 25),
-            plot_bgcolor='white',
-            showlegend=False
-        )
-    else:
-        fig_bipartite = go.Figure()
-        fig_bipartite.add_annotation(text="No bipartite data available", showarrow=False)
-        fig_bipartite.update_layout(height=300)
+var tooltip = d3.select("#tooltip");
+var g = svg.append("g");
 
-    _n_shared = len(set(_partner_list) & set([p for e in _edges for p in [e[0], e[1]] if p not in _pseudonym_ids]))
+// Zoom
+svg.call(d3.zoom().scaleExtent([0.3, 4]).on("zoom", function(event) {{
+    g.attr("transform", event.transform);
+}}));
 
-    mo.vstack([
+// Node radius based on volume
+var maxVol = d3.max(nodes, function(d) {{ return d.volume; }}) || 1;
+function nodeR(d) {{
+    return Math.max(6, Math.min(22, 6 + (d.volume / maxVol) * 16));
+}}
+
+// Bipartite x positions
+var pseudoX = W * 0.22;
+var partnerX = W * 0.72;
+
+// Initial y positions
+var pseudoNodes = nodes.filter(function(d) {{ return d.group === "pseudonym"; }});
+var partnerNodes = nodes.filter(function(d) {{ return d.group === "partner"; }});
+
+pseudoNodes.forEach(function(d, i) {{
+    d.x = pseudoX;
+    d.y = 40 + (H - 80) * i / Math.max(1, pseudoNodes.length - 1);
+    d.fx = null;
+}});
+partnerNodes.forEach(function(d, i) {{
+    d.x = partnerX;
+    d.y = 40 + (H - 80) * i / Math.max(1, partnerNodes.length - 1);
+    d.fx = null;
+}});
+
+// Force simulation with bipartite pull
+var simulation = d3.forceSimulation(nodes)
+    .force("link", d3.forceLink(edges).id(function(d) {{ return d.id; }}).distance(200).strength(0.15))
+    .force("charge", d3.forceManyBody().strength(-60))
+    .force("y", d3.forceY(H / 2).strength(0.02))
+    .force("x", d3.forceX(function(d) {{ return d.group === "pseudonym" ? pseudoX : partnerX; }}).strength(0.3))
+    .force("collide", d3.forceCollide(function(d) {{ return nodeR(d) + 8; }}));
+
+// Arrow marker
+svg.append("defs").append("marker")
+    .attr("id", "bp-arrow")
+    .attr("viewBox", "0 -5 10 10")
+    .attr("refX", 18).attr("refY", 0)
+    .attr("markerWidth", 5).attr("markerHeight", 5)
+    .attr("orient", "auto")
+    .append("path").attr("d", "M0,-4L10,0L0,4").attr("fill", "#aaa");
+
+// Draw edges
+var edgeSel = g.append("g").selectAll("line")
+    .data(edges).enter().append("line")
+    .attr("stroke", "#bbb")
+    .attr("stroke-width", function(d) {{ return Math.max(1, Math.min(d.weight * 0.6, 8)); }})
+    .attr("opacity", 0.4)
+    .attr("marker-end", "url(#bp-arrow)");
+
+// Invisible wide edge targets for hovering
+var edgeHover = g.append("g").selectAll("line")
+    .data(edges).enter().append("line")
+    .attr("stroke", "transparent")
+    .attr("stroke-width", 14)
+    .style("cursor", "pointer")
+    .on("mouseover", function(event, d) {{
+        d3.select(edgeSel.nodes()[edges.indexOf(d)])
+            .attr("stroke", "#333").attr("opacity", 0.8);
+        var srcLabel = nodes.find(function(n) {{ return n.id === (d.source.id || d.source); }});
+        var tgtLabel = nodes.find(function(n) {{ return n.id === (d.target.id || d.target); }});
+        tooltip.style("display", "block")
+            .html("<strong>" + (srcLabel ? srcLabel.label : "?") + " &harr; " + (tgtLabel ? tgtLabel.label : "?") + "</strong>"
+                + "<br/><span style='font-size:16px;font-weight:bold'>" + d.weight + "</span> messages")
+            .style("left", (event.clientX + 14) + "px")
+            .style("top", (event.clientY - 20) + "px");
+    }})
+    .on("mouseout", function(event, d) {{
+        d3.select(edgeSel.nodes()[edges.indexOf(d)])
+            .attr("stroke", "#bbb").attr("opacity", 0.4);
+        tooltip.style("display", "none");
+    }});
+
+// Draw nodes
+var nodeSel = g.append("g").selectAll("g")
+    .data(nodes).enter().append("g")
+    .style("cursor", "pointer")
+    .call(d3.drag()
+        .on("start", function(event, d) {{
+            if (!event.active) simulation.alphaTarget(0.3).restart();
+            d.fx = d.x; d.fy = d.y;
+        }})
+        .on("drag", function(event, d) {{ d.fx = event.x; d.fy = event.y; }})
+        .on("end", function(event, d) {{
+            if (!event.active) simulation.alphaTarget(0);
+            d.fx = null; d.fy = null;
+        }})
+    );
+
+nodeSel.append("circle")
+    .attr("r", function(d) {{ return nodeR(d); }})
+    .attr("fill", function(d) {{
+        if (d.group === "pseudonym") return "#FFD700";
+        return partnerColors[d.sub_type] || "#4ECDC4";
+    }})
+    .attr("stroke", function(d) {{
+        if (d.group === "pseudonym") return "#B8860B";
+        return "#555";
+    }})
+    .attr("stroke-width", function(d) {{ return d.group === "pseudonym" ? 2.5 : 1.2; }});
+
+nodeSel.append("text")
+    .attr("dx", function(d) {{ return d.group === "pseudonym" ? -(nodeR(d) + 5) : (nodeR(d) + 5); }})
+    .attr("dy", 4)
+    .attr("text-anchor", function(d) {{ return d.group === "pseudonym" ? "end" : "start"; }})
+    .style("font-size", function(d) {{ return d.group === "pseudonym" ? "11px" : "10px"; }})
+    .style("font-weight", function(d) {{ return d.group === "pseudonym" ? "bold" : "normal"; }})
+    .style("fill", "#333")
+    .style("pointer-events", "none")
+    .text(function(d) {{ return d.label.length > 20 ? d.label.substring(0,20) + "\\u2026" : d.label; }});
+
+// Hover highlight
+nodeSel.on("mouseover", function(event, d) {{
+    d3.select(this).select("circle").attr("stroke", "#333").attr("stroke-width", 3);
+    // Highlight connected edges
+    edgeSel.attr("opacity", function(e) {{
+        var sid = e.source.id || e.source;
+        var tid = e.target.id || e.target;
+        return (sid === d.id || tid === d.id) ? 0.85 : 0.08;
+    }}).attr("stroke", function(e) {{
+        var sid = e.source.id || e.source;
+        var tid = e.target.id || e.target;
+        return (sid === d.id || tid === d.id) ? "#555" : "#bbb";
+    }});
+    // Dim non-connected nodes
+    nodeSel.select("circle").attr("opacity", function(n) {{
+        if (n.id === d.id) return 1;
+        var connected = edges.some(function(e) {{
+            var sid = e.source.id || e.source;
+            var tid = e.target.id || e.target;
+            return (sid === d.id && tid === n.id) || (tid === d.id && sid === n.id);
+        }});
+        return connected ? 1 : 0.15;
+    }});
+    nodeSel.select("text").attr("opacity", function(n) {{
+        if (n.id === d.id) return 1;
+        var connected = edges.some(function(e) {{
+            var sid = e.source.id || e.source;
+            var tid = e.target.id || e.target;
+            return (sid === d.id && tid === n.id) || (tid === d.id && sid === n.id);
+        }});
+        return connected ? 1 : 0.15;
+    }});
+    // Tooltip
+    var connCount = edges.filter(function(e) {{
+        var sid = e.source.id || e.source;
+        var tid = e.target.id || e.target;
+        return sid === d.id || tid === d.id;
+    }}).length;
+    var totalMsgs = edges.filter(function(e) {{
+        var sid = e.source.id || e.source;
+        var tid = e.target.id || e.target;
+        return sid === d.id || tid === d.id;
+    }}).reduce(function(s, e) {{ return s + e.weight; }}, 0);
+    tooltip.style("display", "block")
+        .html("<strong>" + d.label + "</strong><br/>"
+            + d.sub_type + " (" + d.group + ")<br/>"
+            + "<div style='margin:3px 0;padding:3px 8px;background:#f5f5f5;border-radius:4px'>"
+            + connCount + " connections &middot; " + totalMsgs + " total messages"
+            + "</div>")
+        .style("left", (event.clientX + 14) + "px")
+        .style("top", (event.clientY - 20) + "px");
+}})
+.on("mouseout", function(event, d) {{
+    d3.select(this).select("circle")
+        .attr("stroke", d.group === "pseudonym" ? "#B8860B" : "#555")
+        .attr("stroke-width", d.group === "pseudonym" ? 2.5 : 1.2);
+    edgeSel.attr("opacity", 0.4).attr("stroke", "#bbb");
+    nodeSel.select("circle").attr("opacity", 1);
+    nodeSel.select("text").attr("opacity", 1);
+    tooltip.style("display", "none");
+}});
+
+// Column labels
+svg.append("text").attr("x", pseudoX).attr("y", 20)
+    .attr("text-anchor", "middle").style("font-size", "13px")
+    .style("font-weight", "bold").style("fill", "#B8860B")
+    .text("Pseudonyms (" + pseudoNodes.length + ")");
+svg.append("text").attr("x", partnerX).attr("y", 20)
+    .attr("text-anchor", "middle").style("font-size", "13px")
+    .style("font-weight", "bold").style("fill", "#2E8B8B")
+    .text("Communication Partners (" + partnerNodes.length + ")");
+
+// Tick
+simulation.on("tick", function() {{
+    edgeSel
+        .attr("x1", function(d) {{ return d.source.x; }})
+        .attr("y1", function(d) {{ return d.source.y; }})
+        .attr("x2", function(d) {{ return d.target.x; }})
+        .attr("y2", function(d) {{ return d.target.y; }});
+    edgeHover
+        .attr("x1", function(d) {{ return d.source.x; }})
+        .attr("y1", function(d) {{ return d.source.y; }})
+        .attr("x2", function(d) {{ return d.target.x; }})
+        .attr("y2", function(d) {{ return d.target.y; }});
+    nodeSel.attr("transform", function(d) {{ return "translate(" + d.x + "," + d.y + ")"; }});
+}});
+
+}} catch(e) {{
+    document.getElementById("container").innerHTML = "<pre style='color:red'>" + e.message + "\\n" + e.stack + "</pre>";
+}}
+</script>
+</body>
+</html>
+    """, width="100%", height=f"{_panel_h + 20}px")
+
+    _n_shared = len(set(_p for (_s, _t) in _edge_agg for _p in [_s, _t] if _p in _partner_ids))
+
+    q3_bipartite = mo.vstack([
         mo.md("### Visualization 2: Bipartite Communication Network"),
-        mo.md(f"**Insight**: {len(_pseudo_list)} pseudonyms communicate with {len(_partner_list)} unique partners. Partners contacted by multiple pseudonyms (visible as multiple edge connections on right) suggest coordinated operations."),
-        fig_bipartite
+        mo.md(f"**Insight**: {_n_pseudo} pseudonyms communicate with {_n_partners} unique partners. Hover over a node to highlight its connections. Partners contacted by multiple pseudonyms suggest coordinated operations."),
+        _bipartite_viz
     ])
-    return
+    return (q3_bipartite,)
 
 
 @app.cell(hide_code=True)
 def _(mo):
-    mo.md(r"""
+    _ = mo.md(r"""
     ---
 
     ## 4. Hierarchical Clustering of Entity Similarity
@@ -3499,17 +3954,17 @@ def _(
         fig_heatmap.update_layout(height=300)
         _n_high = 0
 
-    mo.vstack([
+    q3_sim_heatmap = mo.vstack([
         mo.md("### Visualization 3: Similarity Heatmap — Clustered by Communication Patterns"),
         mo.md(f"**Insight**: Hierarchical clustering reveals {_n_high if '_n_high' in dir() else 0} entity pairs with similarity ≥ {_thresh}. Diagonal blocks indicate communities of entities that share communication partners."),
         fig_heatmap
     ])
-    return
+    return (q3_sim_heatmap,)
 
 
 @app.cell(hide_code=True)
 def _(mo):
-    mo.md(r"""
+    _ = mo.md(r"""
     ---
 
     ## 5. Temporal Activity Fingerprint Matrix
@@ -3624,17 +4079,17 @@ def _(
         fig_temporal.update_layout(height=300)
         _n_pseudo_temporal = 0
 
-    mo.vstack([
+    q3_temporal = mo.vstack([
         mo.md("### Visualization 4: Temporal Activity Matrix"),
         mo.md(f"**Insight**: Activity concentrated between 08:00-14:00 (business hours). {_n_pseudo_temporal} pseudonyms visible (★). Look for complementary patterns pseudonyms active at different hours could be the same person."),
         fig_temporal
     ])
-    return
+    return (q3_temporal,)
 
 
 @app.cell(hide_code=True)
 def _(mo):
-    mo.md(r"""
+    _ = mo.md(r"""
     ---
 
     ## 6. Interactive Similarity Network
@@ -3752,17 +4207,17 @@ def _(
         _n_pseudo_in_net = 0
         _n_components = 0
 
-    mo.vstack([
+    q3_force_network = mo.vstack([
         mo.md(f"### Visualization 5: Force-Directed Network (Threshold = {_thresh:.2f})"),
         mo.md(f"**Insight**: At threshold {_thresh:.2f}, the network has **{len(_G.nodes) if '_G' in dir() and len(_G.nodes) > 0 else 0} entities** in **{_n_components} connected components**. Pseudonyms in the same component share communication partners."),
         fig_force
     ])
-    return
+    return (q3_force_network,)
 
 
 @app.cell(hide_code=True)
 def _(mo):
-    mo.md(r"""
+    _ = mo.md(r"""
     ---
 
     ## 7. Sankey Diagram: Pseudonym Resolution Flow
@@ -3838,17 +4293,17 @@ def _(go, likely_pseudonyms, mo, sim_threshold, similarity_df):
         _n_pseudo_sankey = 0
         _n_candidates = 0
 
-    mo.vstack([
+    q3_sankey = mo.vstack([
         mo.md("### Visualization 6: Sankey Diagram: Entity Resolution Flow"),
         mo.md(f"**Insight**: At threshold {_thresh:.2f}, **{_n_pseudo_sankey if '_n_pseudo_sankey' in dir() else 0} pseudonyms** connect to **{_n_candidates if '_n_candidates' in dir() else 0} candidate identities**. Wider flows indicate stronger evidence of identity match."),
         fig_sankey
     ])
-    return
+    return (q3_sankey,)
 
 
 @app.cell(hide_code=True)
 def _(mo):
-    mo.md(r"""
+    _ = mo.md(r"""
     ---
 
     ## 8. Parallel Coordinates: Multi-Dimensional Entity Comparison
@@ -3959,17 +4414,17 @@ def _(
         _n_active = 0
         _n_pseudo_pc = 0
 
-    mo.vstack([
+    q3_parallel = mo.vstack([
         mo.md("### Visualization 7: Parallel Coordinates: Multi-Dimensional Entity Analysis"),
         mo.md(f"**Insight**: Comparing **{_n_active if '_n_active' in dir() else 0} active entities** across 6 dimensions. **{_n_pseudo_pc if '_n_pseudo_pc' in dir() else 0} pseudonyms** (gold) can be filtered by dragging on any axis."),
         fig_parallel
     ])
-    return
+    return (q3_parallel,)
 
 
 @app.cell(hide_code=True)
 def _(mo):
-    mo.md(r"""
+    _ = mo.md(r"""
     ---
 
     ## 9. Top Entity Resolution Candidates
@@ -4032,17 +4487,17 @@ def _(
             (_relevant['entity_b'].isin(_pseudonym_ids))
         ])
 
-        mo.vstack([
+        q3_resolution = mo.vstack([
             mo.md("### Visualization 8: Top Resolution Candidates Table"),
             mo.md(f"**Summary**: **{_n_pairs} entity pairs** with similarity ≥ {_thresh:.2f}. **{_n_pseudo_pairs}** involve at least one pseudonym (★)."),
             _table
         ])
     else:
-        mo.vstack([
+        q3_resolution = mo.vstack([
             mo.md("### Visualization 8: Top Resolution Candidates Table"),
             mo.md(f"No entity pairs found with similarity ≥ {_thresh:.2f}. Try lowering the threshold.")
         ])
-    return
+    return (q3_resolution,)
 
 
 @app.cell(hide_code=True)
@@ -4051,58 +4506,89 @@ def _(likely_pseudonyms, mo, sim_threshold, similarity_df):
     _thresh = sim_threshold.value
     _top_pairs = similarity_df[similarity_df['jaccard'] >= _thresh].head(5) if len(similarity_df) > 0 else None
 
-    mo.md(f"""
-    ---
+    _top_pairs_text = ""
+    if _top_pairs is not None and len(_top_pairs) > 0:
+        for _, _r in _top_pairs.iterrows():
+            _top_pairs_text += f"- **{_r['label_a']}** ↔ **{_r['label_b']}**: Jaccard = {_r['jaccard']:.3f} ({_r['shared_partners']} shared partners)\n"
 
-    ## Key Findings for Question 3
+    q3_findings = mo.md(
+        f"---\n\n"
+        f"## Key Findings for Question 3\n\n"
+        f"### 3.1 Who is Using Pseudonyms? ({_n_pseudo} entities identified)\n\n"
+        f"Through naming pattern analysis (Section 1), we identified the following likely pseudonyms:\n\n"
+        f"| Pseudonym | Pattern | Investigative Significance |\n"
+        f"|-----------|---------|---------------------------|\n"
+        f"| **Boss** | Title-like | Central command/coordination role — likely the operation's leader |\n"
+        f'| **The Lookout** | "The X" | Surveillance operations — monitors activities and reports |\n'
+        f'| **The Middleman** | "The X" | Logistics/brokerage — facilitates transactions between parties |\n'
+        f'| **The Accountant** | "The X" | Financial operations — manages money flows |\n'
+        f'| **Mrs. Money** | "Mrs. X" | Financial handler — possibly works with The Accountant |\n'
+        f'| **The Intern** | "The X" | Junior operative — newcomer to the organization |\n'
+        f"| **Small Fry** | Title-like | Minor player/low rank — likely handles small tasks |\n"
+        f"| **Sam, Kelly, Davis, Elise, Rodriguez** | Single-word heuristic | **Ambiguous** — may be real names or radio handles; requires further evidence |\n\n"
+        f'**Validation**: The challenge confirms "Boss" and "The Lookout" as known aliases. Our heuristics correctly identify both.\n\n'
+        f"**Tier 2: Ambiguous first-name handles** (Jaccard evidence provided where available):\n"
+        f"- **Davis**: Jaccard 0.667 with V. Miesel Shipping (8 shared partners) — deeply embedded in the criminal cluster\n"
+        f"- **Rodriguez**: Jaccard 0.636 with V. Miesel Shipping (7 shared partners) — strong operational overlap\n"
+        f"- **Sam, Kelly, Elise**: Flagged by single-word heuristic only; legitimate maritime first-name use cannot be ruled out\n\n"
+        f"### 3.2 How Do Visualizations Help Clepper?\n\n"
+        f"Each visualization provides a **unique analytical perspective**:\n\n"
+        f"| # | Visualization | Insight Provided | Analytical Value |\n"
+        f"|---|--------------|------------------|------------------|\n"
+        f"| 1 | Pseudonym Detection Bar | Identifies and ranks suspected aliases | Prioritizes investigation targets |\n"
+        f"| 2 | Bipartite Network | Shows direct communication relationships | Reveals who pseudonyms contact |\n"
+        f"| 3 | Similarity Heatmap | Clusters entities by communication overlap | Identifies entity groups |\n"
+        f"| 4 | Temporal Matrix | Shows hourly activity fingerprints | Finds non-overlapping schedules |\n"
+        f"| 5 | Force-Directed Network | Interactive similarity exploration | Discovers unexpected connections |\n"
+        f"| 6 | Sankey Diagram | Maps pseudonyms to candidate identities | Visualizes resolution hypotheses |\n"
+        f"| 7 | Parallel Coordinates | Multi-dimensional entity comparison | Finds similar entity profiles |\n"
+        f"| 8 | Resolution Table | Ranked list of identity matches | Actionable investigation list |\n\n"
+        f"**Coordinated Views**: The global threshold slider updates all visualizations simultaneously, enabling cross-referencing.\n\n"
+        f"### 3.3 How Does Understanding Change with Pseudonyms?\n\n"
+        f"With pseudonym awareness, Clepper can:\n\n"
+        f'1. **Reveal the operational hierarchy**: The "The X" naming convention maps onto a command structure — '
+        f"Boss issues orders, The Middleman and Mrs. Money manage logistics and finance, The Intern and Small Fry execute operations.\n"
+        f"2. **Link pseudonyms to vessels**: The Lookout shares 4/7 partners with vessel Seawatch (Jaccard 0.571), "
+        f"and Small Fry shares 2/3 partners with vessel Knowles (Jaccard 0.667).\n"
+        f"3. **Identify V. Miesel Shipping as an operational hub**: Davis (J=0.667) and Rodriguez (J=0.636) both share "
+        f"the majority of their partners with V. Miesel Shipping.\n"
+        f"4. **Detect counter-intelligence activity**: The Lookout holds a Suspicious relationship with Clepper Jensen "
+        f"and reports to the Green Guardians — an operative embedded in a legitimate group to monitor the investigation.\n"
+        f"5. **Consolidate the network**: Resolving the 7 confirmed pseudonyms to probable real identities reduces "
+        f"apparent complexity and reveals a tighter, more coherent criminal structure.\n\n"
+        f"**Top Resolution Candidates** (at current threshold {_thresh:.2f}):\n"
+        f"{_top_pairs_text}"
+    )
+    return (q3_findings,)
 
-    ### 3.1 Who is Using Pseudonyms? ({_n_pseudo} entities identified)
 
-    Through naming pattern analysis (Section 1), we identified the following likely pseudonyms:
+@app.cell(hide_code=True)
+def _(mo):
+    q4_question = mo.md(rf"""
+    ## **Findings for Question 4**
 
-    | Pseudonym | Pattern | Investigative Significance |
-    |-----------|---------|---------------------------|
-    | **Boss** | Title-like | Central command/coordination role likely the operation's leader |
-    | **The Lookout** | "The X" | Surveillance operations monitors activities and reports |
-    | **The Middleman** | "The X" | Logistics/brokerage facilitates transactions between parties |
-    | **The Accountant** | "The X" | Financial operations manages money flows |
-    | **Mrs. Money** | "Mrs. X" | Financial handler possibly works with The Accountant |
-    | **The Intern** | "The X" | Junior operative newcomer to the organization |
-    | **Small Fry** | Title-like | Minor player/low rank likely handles small tasks |
-    | **Sam, Kelly, Davis, Elise, Rodriguez** | Single-word Person | First-name-only aliases common obfuscation technique |
+    4. Clepper suspects that Nadia Conti, who was formerly entangled in an illegal fishing scheme, may have continued illicit activity within Oceanus.
 
-    **Validation**: The challenge confirms "Boss" and "The Lookout" as known aliases. Our heuristics correctly identify both, plus 10 additional suspects.
+        - a) Through visual analytics, provide evidence that Nadia is, or is not, doing something illegal.
+        - b) Summarize Nadia’s actions visually. Are Clepper’s suspicions justified?
+    """)
+    return (q4_question,)
 
-    ### 3.2 How Do Visualizations Help Clepper?
 
-    Each visualization provides a **unique analytical perspective**:
+@app.cell(hide_code=True)
+def _(mo):
+    q4_evidence = mo.md(r"""
+    The communication profile of Nadia Conti reveals that a significant number of her messages are sent to what appear to be pseudonyms.
+    ![alt](public/NadiaContiContactlist.png)
+    The Communication Intelligence Dashboard reveals messages sent between Naida and others, many of which have a high suspicion rating. The message categories by sender graph shows Nadia having sent two “cover story” messages, four “covert coordination” messages, and two “illegal activity” messages, strongly indicating that she is, indeed, engaged in illicit activity within Oceanus. The average suspicion risk of her messages are a 6.0 (out of 10), and she is at high risk (12, with >7 being high) of being a person of interest in illegal activities. In particular, her and Liam Thorne, whom the intelligence dashboard marks as the entity with the highest suspicion rating, share four messages between them that have an average suspicion rating of 8.0 (out of 10).
+    ![alt](public/NadiaContiCommunicationsDashboard.png)
+    """)
+    return (q4_evidence,)
 
-    | # | Visualization | Insight Provided | Analytical Value |
-    |---|--------------|------------------|------------------|
-    | 1 | Pseudonym Detection Bar | Identifies and ranks suspected aliases | Prioritizes investigation targets |
-    | 2 | Bipartite Network | Shows direct communication relationships | Reveals who pseudonyms contact |
-    | 3 | Similarity Heatmap | Clusters entities by communication overlap | Identifies entity groups |
-    | 4 | Temporal Matrix | Shows hourly activity fingerprints | Finds non-overlapping schedules |
-    | 5 | Force-Directed Network | Interactive similarity exploration | Discovers unexpected connections |
-    | 6 | Sankey Diagram | Maps pseudonyms to candidate identities | Visualizes resolution hypotheses |
-    | 7 | Parallel Coordinates | Multi-dimensional entity comparison | Finds similar entity profiles |
-    | 8 | Resolution Table | Ranked list of identity matches | Actionable investigation list |
 
-    **Coordinated Views**: The global threshold slider (Section 2) updates all visualizations simultaneously, enabling cross-referencing. For example, adjusting threshold reveals which pseudonyms remain connected at higher similarity levels.
-
-    ### 3.3 How Does Understanding Change with Pseudonyms?
-
-    With pseudonym awareness, Clepper can:
-
-    1. **Consolidate the network**: Multiple pseudonyms may collapse to fewer actual people, simplifying the investigation
-    2. **Identify organizational roles**: "The X" pattern reveals an organized hierarchy (Boss → Middleman → Intern → Small Fry)
-    3. **Prioritize investigation**: Focus on resolving "Boss" (central command) and "Mrs. Money" / "The Accountant" (financial operations)
-    4. **Detect coordination**: Entities with high Jaccard similarity but non-overlapping temporal patterns are strong same-person candidates
-    5. **Map operational structure**: The title-like naming convention suggests formal organizational roles, not ad-hoc aliases
-
-    **Top Resolution Candidates** (at current threshold {_thresh:.2f}):
-    {"".join([f"- **{r['label_a']}** ↔ **{r['label_b']}**: Jaccard = {r['jaccard']:.3f} ({r['shared_partners']} shared partners)" + chr(10) for _, r in (_top_pairs.iterrows() if _top_pairs is not None and len(_top_pairs) > 0 else [])])}
-
+@app.cell(hide_code=True)
+def _(mo):
+    references = mo.md(r"""
     ---
 
     ## References
@@ -4135,32 +4621,7 @@ def _(likely_pseudonyms, mo, sim_threshold, similarity_df):
 
     14. **Shneiderman, B.** (1996). "The Eyes Have It: A Task by Data Type Taxonomy for Information Visualizations." *Proc. IEEE Symposium on Visual Languages*, pp. 336-343.
     """)
-    return
-
-
-@app.cell(hide_code=True)
-def _(mo):
-    mo.md(rf"""
-    ## **Findings for Question 4**
-
-    _4. Clepper suspects that Nadia Conti, who was formerly entangled in an illegal fishing scheme, may have continued illicit activity within Oceanus._
-
-        a) Through visual analytics, provide evidence that Nadia is, or is not, doing something illegal.
-
-        b) Summarize Nadia’s actions visually. Are Clepper’s suspicions justified?
-    """)
-    return
-
-
-@app.cell(hide_code=True)
-def _(mo):
-    mo.md(r"""
-    The communication profile of Nadia Conti reveals that a significant number of her messages are sent to what appear to be pseudonyms.
-    ![alt](public/NadiaContiContactlist.png)
-    The Communication Intelligence Dashboard reveals messages sent between Naida and others, many of which have a high suspicion rating. The message categories by sender graph shows Nadia having sent two “cover story” messages, four “covert coordination” messages, and two “illegal activity” messages, strongly indicating that she is, indeed, engaged in illicit activity within Oceanus. The average suspicion risk of her messages are a 6.0 (out of 10), and she is at high risk (12, with >7 being high) of being a person of interest in illegal activities. In particular, her and Liam Thorne, whom the intelligence dashboard marks as the entity with the highest suspicion rating, share four messages between them that have an average suspicion rating of 8.0 (out of 10).
-    ![alt](public/NadiaContiCommunicationsDashboard.png)
-    """)
-    return
+    return (references,)
 
 
 if __name__ == "__main__":
