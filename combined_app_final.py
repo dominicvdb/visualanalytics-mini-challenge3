@@ -171,7 +171,7 @@ def _(
         "References": references,
     })
     app_tabs
-    return (app_tabs,)
+    return
 
 
 @app.cell
@@ -188,17 +188,7 @@ def _():
     # Plotly removed — all visualizations now use D3.js
     import time
 
-    return (
-        alt,
-        datetime,
-        defaultdict,
-        json_graph,
-        json_lib,
-        mo,
-        np,
-        nx,
-        pd,
-    )
+    return alt, datetime, defaultdict, json_graph, json_lib, mo, np, nx, pd
 
 
 @app.cell
@@ -330,7 +320,7 @@ def _(comm_events, edges_from, edges_to, nodes_by_id, pd):
                 'target': _target_node.get('name', _receivers[0]),
             })
     messages_df = pd.DataFrame(_messages)
-    return (messages_df,)
+    return
 
 
 @app.cell(hide_code=True)
@@ -377,46 +367,46 @@ def _(df_intents, json_lib, mo):
     _n_entities = len(_top_entities)
 
     _cat_overview = mo.iframe(f"""
-<!DOCTYPE html>
-<html>
-<head>
-<script src="https://d3js.org/d3.v7.min.js"></script>
-<style>
-* {{ box-sizing: border-box; }}
-body {{ margin: 0; font-family: 'Segoe UI', sans-serif; background: #fafafa; }}
-#container {{ width: 100%; background: white; border: 1px solid #ddd; border-radius: 6px;
+    <!DOCTYPE html>
+    <html>
+    <head>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+    * {{ box-sizing: border-box; }}
+    body {{ margin: 0; font-family: 'Segoe UI', sans-serif; background: #fafafa; }}
+    #container {{ width: 100%; background: white; border: 1px solid #ddd; border-radius: 6px;
               padding: 16px; overflow: hidden; }}
-#stats {{
+    #stats {{
     font-size: 11px; color: #666; margin-bottom: 10px;
     display: flex; gap: 16px; align-items: center;
-}}
-.stat-box {{
+    }}
+    .stat-box {{
     padding: 3px 10px; background: #f5f5f5; border-radius: 4px; border: 1px solid #eee;
     text-align: center;
-}}
-.stat-val {{ font-size: 16px; font-weight: bold; color: #333; }}
-.stat-lbl {{ font-size: 9px; color: #888; }}
-#filter-msg {{
+    }}
+    .stat-val {{ font-size: 16px; font-weight: bold; color: #333; }}
+    .stat-lbl {{ font-size: 9px; color: #888; }}
+    #filter-msg {{
     font-size: 12px; color: #555; margin: 6px 0;
     padding: 4px 10px; background: #fffde7; border-radius: 4px; border: 1px solid #f0e68c;
     display: none; cursor: pointer;
-}}
-.section-title {{
+    }}
+    .section-title {{
     font-size: 13px; font-weight: bold; color: #444; margin: 14px 0 6px;
     border-bottom: 1px solid #eee; padding-bottom: 3px;
-}}
-.tooltip {{
+    }}
+    .tooltip {{
     position: fixed; background: white; border: 1px solid #ccc; border-radius: 6px;
     padding: 8px 12px; font-size: 12px; pointer-events: none;
     box-shadow: 2px 2px 6px rgba(0,0,0,0.15); display: none;
     max-width: 300px; z-index: 1000;
-}}
-.bar:hover {{ opacity: 0.85; cursor: pointer; }}
-.hm-cell:hover {{ stroke: #333; stroke-width: 1.5; cursor: pointer; }}
-</style>
-</head>
-<body>
-<div id="container">
+    }}
+    .bar:hover {{ opacity: 0.85; cursor: pointer; }}
+    .hm-cell:hover {{ stroke: #333; stroke-width: 1.5; cursor: pointer; }}
+    </style>
+    </head>
+    <body>
+    <div id="container">
     <div id="stats">
         <div class="stat-box"><div class="stat-val">{_n_msgs}</div><div class="stat-lbl">Messages</div></div>
         <div class="stat-box"><div class="stat-val">{_n_cats}</div><div class="stat-lbl">Categories</div></div>
@@ -431,29 +421,29 @@ body {{ margin: 0; font-family: 'Segoe UI', sans-serif; background: #fafafa; }}
     <div id="entity-chart"></div>
     <div class="section-title">Category Frequency Over Time</div>
     <div id="heatmap-chart"></div>
-</div>
-<div class="tooltip" id="tooltip"></div>
+    </div>
+    <div class="tooltip" id="tooltip"></div>
 
-<script>
-try {{
+    <script>
+    try {{
 
-var catData = {_cat_json};
-var entityData = {_entity_json};
-var entityOrder = {_entity_order_json};
-var heatmapData = {_heatmap_json};
-var datesSorted = {_dates_json};
-var catsSorted = {_cats_json};
+    var catData = {_cat_json};
+    var entityData = {_entity_json};
+    var entityOrder = {_entity_order_json};
+    var heatmapData = {_heatmap_json};
+    var datesSorted = {_dates_json};
+    var catsSorted = {_cats_json};
 
-var tooltip = d3.select("#tooltip");
-var filterMsg = d3.select("#filter-msg");
-var filterCat = d3.select("#filter-cat");
+    var tooltip = d3.select("#tooltip");
+    var filterMsg = d3.select("#filter-msg");
+    var filterCat = d3.select("#filter-cat");
 
-// Color scale
-var catColors = d3.scaleOrdinal(d3.schemeTableau10).domain(catsSorted);
+    // Color scale
+    var catColors = d3.scaleOrdinal(d3.schemeTableau10).domain(catsSorted);
 
-var activeFilter = null;
+    var activeFilter = null;
 
-function setFilter(cat) {{
+    function setFilter(cat) {{
     if (activeFilter === cat) {{
         activeFilter = null;
         filterMsg.style("display", "none");
@@ -463,23 +453,23 @@ function setFilter(cat) {{
         filterMsg.style("display", "block");
     }}
     updateAll();
-}}
+    }}
 
-filterMsg.on("click", function() {{ activeFilter = null; filterMsg.style("display", "none"); updateAll(); }});
+    filterMsg.on("click", function() {{ activeFilter = null; filterMsg.style("display", "none"); updateAll(); }});
 
-// ═══ 1. CATEGORY BAR CHART ═══
-var catMargin = {{top: 5, right: 60, bottom: 5, left: 160}};
-var catW = 700, catBarH = 24;
-var catH = catData.length * catBarH + catMargin.top + catMargin.bottom;
+    // ═══ 1. CATEGORY BAR CHART ═══
+    var catMargin = {{top: 5, right: 60, bottom: 5, left: 160}};
+    var catW = 700, catBarH = 24;
+    var catH = catData.length * catBarH + catMargin.top + catMargin.bottom;
 
-var catSvg = d3.select("#cat-chart").append("svg")
+    var catSvg = d3.select("#cat-chart").append("svg")
     .attr("width", catW).attr("height", catH);
-var catG = catSvg.append("g").attr("transform", "translate(" + catMargin.left + "," + catMargin.top + ")");
+    var catG = catSvg.append("g").attr("transform", "translate(" + catMargin.left + "," + catMargin.top + ")");
 
-var catX = d3.scaleLinear().range([0, catW - catMargin.left - catMargin.right]);
-var catY = d3.scaleBand().range([0, catH - catMargin.top - catMargin.bottom]).padding(0.15);
+    var catX = d3.scaleLinear().range([0, catW - catMargin.left - catMargin.right]);
+    var catY = d3.scaleBand().range([0, catH - catMargin.top - catMargin.bottom]).padding(0.15);
 
-function drawCatBars() {{
+    function drawCatBars() {{
     var data = catData;
     var maxVal = d3.max(data, function(d) {{ return d.count; }});
     catX.domain([0, maxVal]);
@@ -533,20 +523,20 @@ function drawCatBars() {{
         .on("mouseout", function() {{ tooltip.style("display", "none"); }});
 
     bars.exit().remove();
-}}
+    }}
 
-// ═══ 2. ENTITY STACKED BAR CHART ═══
-var entMargin = {{top: 5, right: 30, bottom: 5, left: 160}};
-var entBarH = 20;
-var entW = 700;
+    // ═══ 2. ENTITY STACKED BAR CHART ═══
+    var entMargin = {{top: 5, right: 30, bottom: 5, left: 160}};
+    var entBarH = 20;
+    var entW = 700;
 
-var entSvg = d3.select("#entity-chart").append("svg").attr("width", entW);
-var entG = entSvg.append("g").attr("transform", "translate(" + entMargin.left + "," + entMargin.top + ")");
+    var entSvg = d3.select("#entity-chart").append("svg").attr("width", entW);
+    var entG = entSvg.append("g").attr("transform", "translate(" + entMargin.left + "," + entMargin.top + ")");
 
-var entX = d3.scaleLinear().range([0, entW - entMargin.left - entMargin.right]);
-var entY = d3.scaleBand().padding(0.12);
+    var entX = d3.scaleLinear().range([0, entW - entMargin.left - entMargin.right]);
+    var entY = d3.scaleBand().padding(0.12);
 
-function drawEntityBars() {{
+    function drawEntityBars() {{
     // Aggregate per entity
     var filteredData = activeFilter
         ? entityData.filter(function(d) {{ return d.category === activeFilter; }})
@@ -617,32 +607,32 @@ function drawEntityBars() {{
         }})
         .on("mouseout", function() {{ tooltip.style("display", "none"); }})
         .on("click", function(event, d) {{ setFilter(d.category); }});
-}}
+    }}
 
-// ═══ 3. HEATMAP ═══
-var hmMargin = {{top: 5, right: 30, bottom: 60, left: 160}};
-var hmCellW = 38, hmCellH = 22;
-var hmW = Math.max(700, datesSorted.length * hmCellW + hmMargin.left + hmMargin.right);
-var hmH = catsSorted.length * hmCellH + hmMargin.top + hmMargin.bottom;
+    // ═══ 3. HEATMAP ═══
+    var hmMargin = {{top: 5, right: 30, bottom: 60, left: 160}};
+    var hmCellW = 38, hmCellH = 22;
+    var hmW = Math.max(700, datesSorted.length * hmCellW + hmMargin.left + hmMargin.right);
+    var hmH = catsSorted.length * hmCellH + hmMargin.top + hmMargin.bottom;
 
-var hmSvg = d3.select("#heatmap-chart").append("svg")
+    var hmSvg = d3.select("#heatmap-chart").append("svg")
     .attr("width", hmW).attr("height", hmH);
-var hmG = hmSvg.append("g").attr("transform", "translate(" + hmMargin.left + "," + hmMargin.top + ")");
+    var hmG = hmSvg.append("g").attr("transform", "translate(" + hmMargin.left + "," + hmMargin.top + ")");
 
-var hmX = d3.scaleBand().domain(datesSorted).range([0, datesSorted.length * hmCellW]).padding(0.05);
-var hmY = d3.scaleBand().domain(catsSorted).range([0, catsSorted.length * hmCellH]).padding(0.05);
+    var hmX = d3.scaleBand().domain(datesSorted).range([0, datesSorted.length * hmCellW]).padding(0.05);
+    var hmY = d3.scaleBand().domain(catsSorted).range([0, catsSorted.length * hmCellH]).padding(0.05);
 
-// Axis labels
-hmG.append("g").attr("class", "hm-x-axis")
+    // Axis labels
+    hmG.append("g").attr("class", "hm-x-axis")
     .attr("transform", "translate(0," + (catsSorted.length * hmCellH) + ")")
     .call(d3.axisBottom(hmX))
     .selectAll("text").attr("transform", "rotate(-40)").style("text-anchor", "end").style("font-size", "9px");
 
-hmG.append("g").attr("class", "hm-y-axis")
+    hmG.append("g").attr("class", "hm-y-axis")
     .call(d3.axisLeft(hmY))
     .selectAll("text").style("font-size", "10px");
 
-function drawHeatmap() {{
+    function drawHeatmap() {{
     var filtered = activeFilter
         ? heatmapData.filter(function(d) {{ return d.category === activeFilter; }})
         : heatmapData;
@@ -677,23 +667,23 @@ function drawHeatmap() {{
             tooltip.style("display", "none");
         }})
         .on("click", function(event, d) {{ setFilter(d.category); }});
-}}
+    }}
 
-// ═══ UPDATE ALL ═══
-function updateAll() {{
+    // ═══ UPDATE ALL ═══
+    function updateAll() {{
     drawCatBars();
     drawEntityBars();
     drawHeatmap();
-}}
+    }}
 
-updateAll();
+    updateAll();
 
-}} catch(e) {{
+    }} catch(e) {{
     document.getElementById("container").innerHTML = "<pre style='color:red;padding:12px'>" + e.message + "\\n" + e.stack + "</pre>";
-}}
-</script>
-</body>
-</html>
+    }}
+    </script>
+    </body>
+    </html>
     """, width="100%", height="1650px")
 
     q1_category_bar = _cat_overview
@@ -1597,7 +1587,7 @@ def _(mo):
 
       For this question we choose to further investigate Mrs. Money, as her messages have an average suspicion score of 6.5, indicating that she might be involved in illegal activities. When investigating her communication network, you can see that most of her communications are with Boss and The Intern. If you then look further into the message history, it becomes quite clear that Mrs. Money reports to boss, while The Intern reports to Mrs. Money. The communications with other entities show mostly covert coordination, but no clear signs of influence.
     """)
-    return (q1_findings,)
+    return
 
 
 @app.cell(hide_code=True)
@@ -1624,7 +1614,6 @@ def _(mo):
         start=1, stop=20, value=2, step=1,
         label="Minimum Communications to Show Edge:"
     )
-
     return min_comm_slider, node_type_filter
 
 
@@ -2034,7 +2023,6 @@ def _():
     return
 
 
-
 @app.cell
 def _(mo):
     heatmap_type_filter = mo.ui.multiselect(
@@ -2067,48 +2055,48 @@ def _(all_entities, comm_matrix, heatmap_type_filter, json_lib, mo):
     _n = len(_sorted_ids)
 
     _freq_iframe = mo.iframe(f"""
-<!DOCTYPE html><html><head>
-<script src="https://d3js.org/d3.v7.min.js"></script>
-<style>
-* {{ box-sizing: border-box; }}
-body {{ margin:0; font-family:'Segoe UI',sans-serif; background:#fafafa; }}
-#container {{ background:white; border:1px solid #ddd; border-radius:6px; padding:10px; overflow:auto; }}
-#stats {{ font-size:11px; color:#666; margin-bottom:8px; }}
-.tooltip {{ position:fixed; background:white; border:1px solid #ccc; border-radius:6px;
-  padding:8px 12px; font-size:12px; pointer-events:none; box-shadow:2px 2px 6px rgba(0,0,0,.15);
-  display:none; z-index:1000; }}
-</style></head><body>
-<div id="container"><div id="stats">{_n} entities &middot; Hover for message counts</div><div id="chart"></div></div>
-<div class="tooltip" id="tooltip"></div>
-<script>
-try {{
-var data={_hm_json}, labels={_labels_json};
-var tooltip=d3.select("#tooltip");
-var n=labels.length, cellSize=Math.max(12, Math.min(22, 600/n));
-var margin={{top:10,right:30,bottom:120,left:120}};
-var W=n*cellSize+margin.left+margin.right, H=n*cellSize+margin.top+margin.bottom;
-var svg=d3.select("#chart").append("svg").attr("width",W).attr("height",H);
-var g=svg.append("g").attr("transform","translate("+margin.left+","+margin.top+")");
-var ids=labels.map(function(d){{return d.id;}});
-var x=d3.scaleBand().domain(ids).range([0,n*cellSize]).padding(.02);
-var y=d3.scaleBand().domain(ids).range([0,n*cellSize]).padding(.02);
-var maxV=d3.max(data,function(d){{return d.v;}})||1;
-var color=d3.scaleSequential(d3.interpolateBlues).domain([0,maxV]);
-g.selectAll("rect").data(data).enter().append("rect")
-  .attr("x",function(d){{return x(d.r);}}).attr("y",function(d){{return x(d.s);}})
-  .attr("width",x.bandwidth()).attr("height",y.bandwidth())
-  .attr("fill",function(d){{return color(d.v);}}).attr("rx",1)
-  .on("mouseover",function(event,d){{
+    <!DOCTYPE html><html><head>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+    * {{ box-sizing: border-box; }}
+    body {{ margin:0; font-family:'Segoe UI',sans-serif; background:#fafafa; }}
+    #container {{ background:white; border:1px solid #ddd; border-radius:6px; padding:10px; overflow:auto; }}
+    #stats {{ font-size:11px; color:#666; margin-bottom:8px; }}
+    .tooltip {{ position:fixed; background:white; border:1px solid #ccc; border-radius:6px;
+      padding:8px 12px; font-size:12px; pointer-events:none; box-shadow:2px 2px 6px rgba(0,0,0,.15);
+      display:none; z-index:1000; }}
+    </style></head><body>
+    <div id="container"><div id="stats">{_n} entities &middot; Hover for message counts</div><div id="chart"></div></div>
+    <div class="tooltip" id="tooltip"></div>
+    <script>
+    try {{
+    var data={_hm_json}, labels={_labels_json};
+    var tooltip=d3.select("#tooltip");
+    var n=labels.length, cellSize=Math.max(12, Math.min(22, 600/n));
+    var margin={{top:10,right:30,bottom:120,left:120}};
+    var W=n*cellSize+margin.left+margin.right, H=n*cellSize+margin.top+margin.bottom;
+    var svg=d3.select("#chart").append("svg").attr("width",W).attr("height",H);
+    var g=svg.append("g").attr("transform","translate("+margin.left+","+margin.top+")");
+    var ids=labels.map(function(d){{return d.id;}});
+    var x=d3.scaleBand().domain(ids).range([0,n*cellSize]).padding(.02);
+    var y=d3.scaleBand().domain(ids).range([0,n*cellSize]).padding(.02);
+    var maxV=d3.max(data,function(d){{return d.v;}})||1;
+    var color=d3.scaleSequential(d3.interpolateBlues).domain([0,maxV]);
+    g.selectAll("rect").data(data).enter().append("rect")
+      .attr("x",function(d){{return x(d.r);}}).attr("y",function(d){{return x(d.s);}})
+      .attr("width",x.bandwidth()).attr("height",y.bandwidth())
+      .attr("fill",function(d){{return color(d.v);}}).attr("rx",1)
+      .on("mouseover",function(event,d){{
     d3.select(this).attr("stroke","#333").attr("stroke-width",1.5);
     tooltip.style("display","block")
       .html("<strong>["+d.st+"] "+d.s+"</strong> &rarr; <strong>["+d.rt+"] "+d.r+"</strong><br/>Messages: <b>"+d.v+"</b>")
       .style("left",(event.clientX+14)+"px").style("top",(event.clientY-20)+"px");
-  }}).on("mouseout",function(){{d3.select(this).attr("stroke","none");tooltip.style("display","none");}});
-g.append("g").attr("transform","translate(0,"+n*cellSize+")")
-  .call(d3.axisBottom(x)).selectAll("text").attr("transform","rotate(-45)").style("text-anchor","end").style("font-size","8px");
-g.append("g").call(d3.axisLeft(y)).selectAll("text").style("font-size","8px");
-}} catch(e){{ document.getElementById("container").innerHTML="<pre style='color:red'>"+e.message+"</pre>"; }}
-</script></body></html>
+      }}).on("mouseout",function(){{d3.select(this).attr("stroke","none");tooltip.style("display","none");}});
+    g.append("g").attr("transform","translate(0,"+n*cellSize+")")
+      .call(d3.axisBottom(x)).selectAll("text").attr("transform","rotate(-45)").style("text-anchor","end").style("font-size","8px");
+    g.append("g").call(d3.axisLeft(y)).selectAll("text").style("font-size","8px");
+    }} catch(e){{ document.getElementById("container").innerHTML="<pre style='color:red'>"+e.message+"</pre>"; }}
+    </script></body></html>
     """, width="100%", height=f"{max(500, _n*22+180)}px")
 
     q2_freq_matrix = mo.vstack([
@@ -2123,7 +2111,6 @@ g.append("g").call(d3.axisLeft(y)).selectAll("text").style("font-size","8px");
 def _():
     # Relationship network description moved to tab
     return
-
 
 
 @app.cell
@@ -2575,53 +2562,53 @@ def _(
         "color":_color_map.get(all_entities_full.get(k,{}).get('sub_type',''),'#ccc')} for k,v in _recv_data])
 
     _profile_iframe = mo.iframe(f"""
-<!DOCTYPE html><html><head>
-<script src="https://d3js.org/d3.v7.min.js"></script>
-<style>
-* {{ box-sizing:border-box; }}
-body {{ margin:0; font-family:'Segoe UI',sans-serif; background:#fafafa; }}
-#container {{ display:flex; gap:16px; width:100%; background:white; border:1px solid #ddd; border-radius:6px; padding:14px; }}
-.panel {{ flex:1; min-width:0; }}
-.panel-title {{ font-size:13px; font-weight:bold; color:#444; margin-bottom:6px; border-bottom:1px solid #eee; padding-bottom:4px; }}
-.tooltip {{ position:fixed; background:white; border:1px solid #ccc; border-radius:6px;
-  padding:8px 12px; font-size:12px; pointer-events:none; box-shadow:2px 2px 6px rgba(0,0,0,.15);
-  display:none; z-index:1000; }}
-.bar:hover {{ opacity:.8; }}
-</style></head><body>
-<div id="container"><div class="panel"><div class="panel-title">Messages Sent by {selected_entity}</div><div id="sent"></div></div>
-<div class="panel"><div class="panel-title">Messages Received by {selected_entity}</div><div id="recv"></div></div></div>
-<div class="tooltip" id="tooltip"></div>
-<script>
-try {{
-var sentData={_sent_json}, recvData={_recv_json};
-var tooltip=d3.select("#tooltip");
-function drawBars(sel, data) {{
-  if(!data.length) {{ d3.select(sel).append("div").style("color","#aaa").style("padding","20px").text("No messages found"); return; }}
-  var margin={{top:5,right:50,bottom:5,left:110}}, barH=22;
-  var W=400, H=data.length*barH+margin.top+margin.bottom;
-  var svg=d3.select(sel).append("svg").attr("width",W).attr("height",H);
-  var g=svg.append("g").attr("transform","translate("+margin.left+","+margin.top+")");
-  var x=d3.scaleLinear().domain([0,d3.max(data,function(d){{return d.count;}})||1]).range([0,W-margin.left-margin.right]);
-  var y=d3.scaleBand().domain(data.map(function(d){{return d.name;}})).range([0,H-margin.top-margin.bottom]).padding(.12);
-  g.selectAll("rect").data(data).enter().append("rect").attr("class","bar")
+    <!DOCTYPE html><html><head>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+    * {{ box-sizing:border-box; }}
+    body {{ margin:0; font-family:'Segoe UI',sans-serif; background:#fafafa; }}
+    #container {{ display:flex; gap:16px; width:100%; background:white; border:1px solid #ddd; border-radius:6px; padding:14px; }}
+    .panel {{ flex:1; min-width:0; }}
+    .panel-title {{ font-size:13px; font-weight:bold; color:#444; margin-bottom:6px; border-bottom:1px solid #eee; padding-bottom:4px; }}
+    .tooltip {{ position:fixed; background:white; border:1px solid #ccc; border-radius:6px;
+      padding:8px 12px; font-size:12px; pointer-events:none; box-shadow:2px 2px 6px rgba(0,0,0,.15);
+      display:none; z-index:1000; }}
+    .bar:hover {{ opacity:.8; }}
+    </style></head><body>
+    <div id="container"><div class="panel"><div class="panel-title">Messages Sent by {selected_entity}</div><div id="sent"></div></div>
+    <div class="panel"><div class="panel-title">Messages Received by {selected_entity}</div><div id="recv"></div></div></div>
+    <div class="tooltip" id="tooltip"></div>
+    <script>
+    try {{
+    var sentData={_sent_json}, recvData={_recv_json};
+    var tooltip=d3.select("#tooltip");
+    function drawBars(sel, data) {{
+      if(!data.length) {{ d3.select(sel).append("div").style("color","#aaa").style("padding","20px").text("No messages found"); return; }}
+      var margin={{top:5,right:50,bottom:5,left:110}}, barH=22;
+      var W=400, H=data.length*barH+margin.top+margin.bottom;
+      var svg=d3.select(sel).append("svg").attr("width",W).attr("height",H);
+      var g=svg.append("g").attr("transform","translate("+margin.left+","+margin.top+")");
+      var x=d3.scaleLinear().domain([0,d3.max(data,function(d){{return d.count;}})||1]).range([0,W-margin.left-margin.right]);
+      var y=d3.scaleBand().domain(data.map(function(d){{return d.name;}})).range([0,H-margin.top-margin.bottom]).padding(.12);
+      g.selectAll("rect").data(data).enter().append("rect").attr("class","bar")
     .attr("x",0).attr("y",function(d){{return y(d.name);}}).attr("height",y.bandwidth())
     .attr("width",function(d){{return x(d.count);}}).attr("fill",function(d){{return d.color;}}).attr("rx",3)
     .on("mouseover",function(event,d){{
       tooltip.style("display","block").html("<strong>"+d.name+"</strong><br/>"+d.type+"<br/>Messages: <b>"+d.count+"</b>")
         .style("left",(event.clientX+14)+"px").style("top",(event.clientY-20)+"px");
     }}).on("mouseout",function(){{tooltip.style("display","none");}});
-  g.selectAll(".lbl").data(data).enter().append("text").attr("x",-5)
+      g.selectAll(".lbl").data(data).enter().append("text").attr("x",-5)
     .attr("y",function(d){{return y(d.name)+y.bandwidth()/2;}}).attr("dy",".35em")
     .attr("text-anchor","end").style("font-size","10px").style("fill","#333")
     .text(function(d){{return d.name.length>14?d.name.substring(0,14)+"…":d.name;}});
-  g.selectAll(".cnt").data(data).enter().append("text")
+      g.selectAll(".cnt").data(data).enter().append("text")
     .attr("x",function(d){{return x(d.count)+4;}}).attr("y",function(d){{return y(d.name)+y.bandwidth()/2;}})
     .attr("dy",".35em").style("font-size","10px").style("font-weight","bold").style("fill","#333")
     .text(function(d){{return d.count;}});
-}}
-drawBars("#sent",sentData); drawBars("#recv",recvData);
-}} catch(e){{ document.getElementById("container").innerHTML="<pre style='color:red'>"+e.message+"</pre>"; }}
-</script></body></html>
+    }}
+    drawBars("#sent",sentData); drawBars("#recv",recvData);
+    }} catch(e){{ document.getElementById("container").innerHTML="<pre style='color:red'>"+e.message+"</pre>"; }}
+    </script></body></html>
     """, width="100%", height=f"{max(300, max(len(_sent_data),len(_recv_data))*24+60)}px")
 
     _entity_rels = [_r for _r in relationship_data
@@ -2641,7 +2628,7 @@ drawBars("#sent",sentData); drawBars("#recv",recvData);
         _profile_iframe,
         mo.md(f"### Formal Relationships of {selected_entity}"),
     ])
-    return q2_entity_profile, rel_df, selected_entity
+    return q2_entity_profile, rel_df
 
 
 @app.cell
@@ -2691,120 +2678,120 @@ def _(all_entities, comm_events, json_lib, mo, pd, relationship_data):
     _n_rel = len(relationship_data)
 
     _stats_iframe = mo.iframe(f"""
-<!DOCTYPE html><html><head>
-<script src="https://d3js.org/d3.v7.min.js"></script>
-<style>
-* {{ box-sizing:border-box; }}
-body {{ margin:0; font-family:'Segoe UI',sans-serif; background:#fafafa; }}
-#container {{ background:white; border:1px solid #ddd; border-radius:6px; padding:14px; }}
-.stat-row {{ display:flex; gap:12px; margin-bottom:8px; }}
-.stat-box {{ text-align:center; padding:6px 14px; background:#f5f5f5; border-radius:5px; border:1px solid #eee; }}
-.stat-val {{ font-size:20px; font-weight:bold; color:#333; }}
-.stat-lbl {{ font-size:9px; color:#888; }}
-.grid {{ display:grid; grid-template-columns:1fr 1fr; gap:16px; }}
-.section {{ border:1px solid #eee; border-radius:6px; padding:10px; }}
-.stitle {{ font-size:12px; font-weight:bold; color:#444; margin-bottom:6px; }}
-.tooltip {{ position:fixed; background:white; border:1px solid #ccc; border-radius:6px;
-  padding:8px 12px; font-size:12px; pointer-events:none; box-shadow:2px 2px 6px rgba(0,0,0,.15);
-  display:none; z-index:1000; }}
-</style></head><body>
-<div id="container">
-<div class="stat-row">
-  <div class="stat-box"><div class="stat-val">{_n_ent}</div><div class="stat-lbl">Entities</div></div>
-  <div class="stat-box"><div class="stat-val">{_n_comm}</div><div class="stat-lbl">Communications</div></div>
-  <div class="stat-box"><div class="stat-val">{_n_rel}</div><div class="stat-lbl">Relationships</div></div>
-</div>
-<div class="grid">
-  <div class="section"><div class="stitle">Communication Volume Over Time</div><div id="timeline"></div></div>
-  <div class="section"><div class="stitle">Activity by Hour &amp; Day</div><div id="hourly"></div></div>
-  <div class="section"><div class="stitle">Entity Type Distribution</div><div id="types"></div></div>
-  <div class="section"><div class="stitle">Relationship Type Distribution</div><div id="rels"></div></div>
-</div></div>
-<div class="tooltip" id="tooltip"></div>
-<script>
-try {{
-var daily={_daily_json}, hourly={_hourly_json}, types={_types_json}, rels={_rels_json};
-var tooltip=d3.select("#tooltip");
-var tc={{"Person":"#4ECDC4","Vessel":"#FF6B6B","Organization":"#95E1D3","Group":"#F38181"}};
-// Timeline bar
-(function(){{
-  var m={{top:5,right:10,bottom:50,left:35}},W=380,H=200;
-  var svg=d3.select("#timeline").append("svg").attr("width",W).attr("height",H);
-  var g=svg.append("g").attr("transform","translate("+m.left+","+m.top+")");
-  var x=d3.scaleBand().domain(daily.map(function(d){{return d.date;}})).range([0,W-m.left-m.right]).padding(.15);
-  var y=d3.scaleLinear().domain([0,d3.max(daily,function(d){{return d.count;}})]).range([H-m.top-m.bottom,0]);
-  g.selectAll("rect").data(daily).enter().append("rect").attr("x",function(d){{return x(d.date);}})
+    <!DOCTYPE html><html><head>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+    * {{ box-sizing:border-box; }}
+    body {{ margin:0; font-family:'Segoe UI',sans-serif; background:#fafafa; }}
+    #container {{ background:white; border:1px solid #ddd; border-radius:6px; padding:14px; }}
+    .stat-row {{ display:flex; gap:12px; margin-bottom:8px; }}
+    .stat-box {{ text-align:center; padding:6px 14px; background:#f5f5f5; border-radius:5px; border:1px solid #eee; }}
+    .stat-val {{ font-size:20px; font-weight:bold; color:#333; }}
+    .stat-lbl {{ font-size:9px; color:#888; }}
+    .grid {{ display:grid; grid-template-columns:1fr 1fr; gap:16px; }}
+    .section {{ border:1px solid #eee; border-radius:6px; padding:10px; }}
+    .stitle {{ font-size:12px; font-weight:bold; color:#444; margin-bottom:6px; }}
+    .tooltip {{ position:fixed; background:white; border:1px solid #ccc; border-radius:6px;
+      padding:8px 12px; font-size:12px; pointer-events:none; box-shadow:2px 2px 6px rgba(0,0,0,.15);
+      display:none; z-index:1000; }}
+    </style></head><body>
+    <div id="container">
+    <div class="stat-row">
+      <div class="stat-box"><div class="stat-val">{_n_ent}</div><div class="stat-lbl">Entities</div></div>
+      <div class="stat-box"><div class="stat-val">{_n_comm}</div><div class="stat-lbl">Communications</div></div>
+      <div class="stat-box"><div class="stat-val">{_n_rel}</div><div class="stat-lbl">Relationships</div></div>
+    </div>
+    <div class="grid">
+      <div class="section"><div class="stitle">Communication Volume Over Time</div><div id="timeline"></div></div>
+      <div class="section"><div class="stitle">Activity by Hour &amp; Day</div><div id="hourly"></div></div>
+      <div class="section"><div class="stitle">Entity Type Distribution</div><div id="types"></div></div>
+      <div class="section"><div class="stitle">Relationship Type Distribution</div><div id="rels"></div></div>
+    </div></div>
+    <div class="tooltip" id="tooltip"></div>
+    <script>
+    try {{
+    var daily={_daily_json}, hourly={_hourly_json}, types={_types_json}, rels={_rels_json};
+    var tooltip=d3.select("#tooltip");
+    var tc={{"Person":"#4ECDC4","Vessel":"#FF6B6B","Organization":"#95E1D3","Group":"#F38181"}};
+    // Timeline bar
+    (function(){{
+      var m={{top:5,right:10,bottom:50,left:35}},W=380,H=200;
+      var svg=d3.select("#timeline").append("svg").attr("width",W).attr("height",H);
+      var g=svg.append("g").attr("transform","translate("+m.left+","+m.top+")");
+      var x=d3.scaleBand().domain(daily.map(function(d){{return d.date;}})).range([0,W-m.left-m.right]).padding(.15);
+      var y=d3.scaleLinear().domain([0,d3.max(daily,function(d){{return d.count;}})]).range([H-m.top-m.bottom,0]);
+      g.selectAll("rect").data(daily).enter().append("rect").attr("x",function(d){{return x(d.date);}})
     .attr("y",function(d){{return y(d.count);}}).attr("width",x.bandwidth())
     .attr("height",function(d){{return H-m.top-m.bottom-y(d.count);}}).attr("fill","#3498DB").attr("rx",2)
     .on("mouseover",function(event,d){{tooltip.style("display","block").html("<b>"+d.date+"</b><br/>"+d.count+" messages")
       .style("left",(event.clientX+14)+"px").style("top",(event.clientY-20)+"px");}})
     .on("mouseout",function(){{tooltip.style("display","none");}});
-  g.append("g").attr("transform","translate(0,"+(H-m.top-m.bottom)+")").call(d3.axisBottom(x))
+      g.append("g").attr("transform","translate(0,"+(H-m.top-m.bottom)+")").call(d3.axisBottom(x))
     .selectAll("text").attr("transform","rotate(-40)").style("text-anchor","end").style("font-size","8px");
-  g.append("g").call(d3.axisLeft(y).ticks(5)).selectAll("text").style("font-size","8px");
-}})();
-// Hourly heatmap
-(function(){{
-  var days=["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"];
-  var m={{top:5,right:10,bottom:10,left:70}},cW=14,cH=22;
-  var W=24*cW+m.left+m.right, H=days.length*cH+m.top+m.bottom;
-  var svg=d3.select("#hourly").append("svg").attr("width",W).attr("height",H);
-  var g=svg.append("g").attr("transform","translate("+m.left+","+m.top+")");
-  var x=d3.scaleBand().domain(d3.range(24)).range([0,24*cW]).padding(.05);
-  var yS=d3.scaleBand().domain(days).range([0,days.length*cH]).padding(.05);
-  var maxV=d3.max(hourly,function(d){{return d.count;}})||1;
-  var color=d3.scaleSequential(d3.interpolateBlues).domain([0,maxV]);
-  g.selectAll("rect").data(hourly).enter().append("rect")
+      g.append("g").call(d3.axisLeft(y).ticks(5)).selectAll("text").style("font-size","8px");
+    }})();
+    // Hourly heatmap
+    (function(){{
+      var days=["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"];
+      var m={{top:5,right:10,bottom:10,left:70}},cW=14,cH=22;
+      var W=24*cW+m.left+m.right, H=days.length*cH+m.top+m.bottom;
+      var svg=d3.select("#hourly").append("svg").attr("width",W).attr("height",H);
+      var g=svg.append("g").attr("transform","translate("+m.left+","+m.top+")");
+      var x=d3.scaleBand().domain(d3.range(24)).range([0,24*cW]).padding(.05);
+      var yS=d3.scaleBand().domain(days).range([0,days.length*cH]).padding(.05);
+      var maxV=d3.max(hourly,function(d){{return d.count;}})||1;
+      var color=d3.scaleSequential(d3.interpolateBlues).domain([0,maxV]);
+      g.selectAll("rect").data(hourly).enter().append("rect")
     .attr("x",function(d){{return x(d.hour);}}).attr("y",function(d){{return yS(d.day_name);}})
     .attr("width",x.bandwidth()).attr("height",yS.bandwidth()).attr("fill",function(d){{return color(d.count);}}).attr("rx",1)
     .on("mouseover",function(event,d){{tooltip.style("display","block").html("<b>"+d.day_name+"</b> "+d.hour+":00<br/>"+d.count+" messages")
       .style("left",(event.clientX+14)+"px").style("top",(event.clientY-20)+"px");}})
     .on("mouseout",function(){{tooltip.style("display","none");}});
-  g.append("g").call(d3.axisLeft(yS)).selectAll("text").style("font-size","9px");
-}})();
-// Entity type donut
-(function(){{
-  var W=380,H=200,r=Math.min(W,H)/2-10;
-  var svg=d3.select("#types").append("svg").attr("width",W).attr("height",H);
-  var g=svg.append("g").attr("transform","translate("+W/2+","+H/2+")");
-  var pie=d3.pie().value(function(d){{return d.count;}});
-  var arc=d3.arc().innerRadius(r*0.5).outerRadius(r);
-  g.selectAll("path").data(pie(types)).enter().append("path").attr("d",arc)
+      g.append("g").call(d3.axisLeft(yS)).selectAll("text").style("font-size","9px");
+    }})();
+    // Entity type donut
+    (function(){{
+      var W=380,H=200,r=Math.min(W,H)/2-10;
+      var svg=d3.select("#types").append("svg").attr("width",W).attr("height",H);
+      var g=svg.append("g").attr("transform","translate("+W/2+","+H/2+")");
+      var pie=d3.pie().value(function(d){{return d.count;}});
+      var arc=d3.arc().innerRadius(r*0.5).outerRadius(r);
+      g.selectAll("path").data(pie(types)).enter().append("path").attr("d",arc)
     .attr("fill",function(d){{return tc[d.data.type]||"#ccc";}}).attr("stroke","white").attr("stroke-width",2)
     .on("mouseover",function(event,d){{tooltip.style("display","block")
       .html("<b>"+d.data.type+"</b><br/>Count: "+d.data.count)
       .style("left",(event.clientX+14)+"px").style("top",(event.clientY-20)+"px");}})
     .on("mouseout",function(){{tooltip.style("display","none");}});
-  var label=d3.arc().innerRadius(r*0.8).outerRadius(r*0.8);
-  g.selectAll("text").data(pie(types)).enter().append("text")
+      var label=d3.arc().innerRadius(r*0.8).outerRadius(r*0.8);
+      g.selectAll("text").data(pie(types)).enter().append("text")
     .attr("transform",function(d){{return "translate("+label.centroid(d)+")";}})
     .attr("text-anchor","middle").style("font-size","10px").style("fill","#333")
     .text(function(d){{return d.data.type;}});
-}})();
-// Relationship type bars
-(function(){{
-  var m={{top:5,right:30,bottom:5,left:90}},barH=22,W=380;
-  var H=rels.length*barH+m.top+m.bottom;
-  var svg=d3.select("#rels").append("svg").attr("width",W).attr("height",H);
-  var g=svg.append("g").attr("transform","translate("+m.left+","+m.top+")");
-  var colors=["#F39C12","#3498DB","#2ECC71","#E74C3C","#9B59B6","#C0392B","#1ABC9C"];
-  var x=d3.scaleLinear().domain([0,d3.max(rels,function(d){{return d.count;}})||1]).range([0,W-m.left-m.right]);
-  var y=d3.scaleBand().domain(rels.map(function(d){{return d.type;}})).range([0,H-m.top-m.bottom]).padding(.12);
-  g.selectAll("rect").data(rels).enter().append("rect")
+    }})();
+    // Relationship type bars
+    (function(){{
+      var m={{top:5,right:30,bottom:5,left:90}},barH=22,W=380;
+      var H=rels.length*barH+m.top+m.bottom;
+      var svg=d3.select("#rels").append("svg").attr("width",W).attr("height",H);
+      var g=svg.append("g").attr("transform","translate("+m.left+","+m.top+")");
+      var colors=["#F39C12","#3498DB","#2ECC71","#E74C3C","#9B59B6","#C0392B","#1ABC9C"];
+      var x=d3.scaleLinear().domain([0,d3.max(rels,function(d){{return d.count;}})||1]).range([0,W-m.left-m.right]);
+      var y=d3.scaleBand().domain(rels.map(function(d){{return d.type;}})).range([0,H-m.top-m.bottom]).padding(.12);
+      g.selectAll("rect").data(rels).enter().append("rect")
     .attr("x",0).attr("y",function(d){{return y(d.type);}}).attr("height",y.bandwidth())
     .attr("width",function(d){{return x(d.count);}}).attr("fill",function(d,i){{return colors[i%colors.length];}}).attr("rx",3)
     .on("mouseover",function(event,d){{tooltip.style("display","block").html("<b>"+d.type+"</b><br/>Count: "+d.count)
       .style("left",(event.clientX+14)+"px").style("top",(event.clientY-20)+"px");}})
     .on("mouseout",function(){{tooltip.style("display","none");}});
-  g.selectAll(".lbl").data(rels).enter().append("text").attr("x",-4)
+      g.selectAll(".lbl").data(rels).enter().append("text").attr("x",-4)
     .attr("y",function(d){{return y(d.type)+y.bandwidth()/2;}}).attr("dy",".35em")
     .attr("text-anchor","end").style("font-size","10px").text(function(d){{return d.type;}});
-  g.selectAll(".cnt").data(rels).enter().append("text")
+      g.selectAll(".cnt").data(rels).enter().append("text")
     .attr("x",function(d){{return x(d.count)+4;}}).attr("y",function(d){{return y(d.type)+y.bandwidth()/2;}})
     .attr("dy",".35em").style("font-size","10px").style("font-weight","bold").text(function(d){{return d.count;}});
-}})();
-}} catch(e){{ document.getElementById("container").innerHTML="<pre style='color:red'>"+e.message+"\\n"+e.stack+"</pre>"; }}
-</script></body></html>
+    }})();
+    }} catch(e){{ document.getElementById("container").innerHTML="<pre style='color:red'>"+e.message+"\\n"+e.stack+"</pre>"; }}
+    </script></body></html>
     """, width="100%", height="680px")
 
     q2_stats = _stats_iframe
@@ -2813,7 +2800,7 @@ var tc={{"Person":"#4ECDC4","Vessel":"#FF6B6B","Organization":"#95E1D3","Group":
     q2_rel_dist = mo.md("")
     fig_timeline = mo.md("")
     q2_top_active = mo.md("")
-    return fig_timeline, q2_entity_dist, q2_hourly_heatmap, q2_rel_dist, q2_stats, q2_top_active, timeline_df
+    return (q2_stats,)
 
 
 @app.cell(hide_code=True)
@@ -2831,7 +2818,7 @@ def _(mo):
 
     The individual profile tool (demonstrated with Nadia Conti as default) allows Clepper to quickly characterize any actor: messages sent vs. received, specific communication partners, and formal relationships — all in one view. The directional indicators (↔, →, ←) clarify whether an entity is a peer, superior, or subordinate in each connection. The daily bar chart and hour-by-day-of-week heatmap together show that activity peaks between 08:00–14:00 and is unevenly distributed across the Oct 1–14, 2040 window — recurring dark time slots indicate deliberately scheduled coordination, a key behavioural signature that distinguishes organized operations from casual interaction.
     """)
-    return (q2_findings,)
+    return
 
 
 @app.cell(hide_code=True)
@@ -2938,7 +2925,7 @@ def _(G, community_dd, community_labels, community_list, mo, pd):
 
 
 @app.cell
-def _(E, G, community_dd, community_labels, community_list, json_lib, mo, nx):
+def _(E, G, community_dd, community_labels, community_list, json_lib, mo):
     _idx = community_labels.index(community_dd.value)
     _members = community_list[_idx]
     _H = E.subgraph(_members).copy()
@@ -2955,55 +2942,55 @@ def _(E, G, community_dd, community_labels, community_list, json_lib, mo, nx):
     _title = community_dd.value
 
     _comm_graph_iframe = mo.iframe(f"""
-<!DOCTYPE html><html><head>
-<script src="https://d3js.org/d3.v7.min.js"></script>
-<style>
-* {{ box-sizing:border-box; }}
-body {{ margin:0; font-family:'Segoe UI',sans-serif; background:#fafafa; }}
-#container {{ width:100%; height:500px; background:white; border:1px solid #ddd; border-radius:6px; position:relative; overflow:hidden; }}
-#stats {{ position:absolute; top:8px; left:10px; font-size:11px; color:#666; background:rgba(255,255,255,.9);
-  padding:3px 8px; border-radius:4px; border:1px solid #eee; z-index:10; }}
-.tooltip {{ position:fixed; background:white; border:1px solid #ccc; border-radius:6px;
-  padding:8px 12px; font-size:12px; pointer-events:none; box-shadow:2px 2px 6px rgba(0,0,0,.15);
-  display:none; z-index:1000; }}
-</style></head><body>
-<div id="container"><div id="stats">{_title}: {_nn} nodes &middot; {_ne} edges</div></div>
-<div class="tooltip" id="tooltip"></div>
-<script>
-try {{
-var nodes={_nj}, edges={_ej};
-var tooltip=d3.select("#tooltip");
-var el=document.getElementById("container"), W=el.offsetWidth||700, H=500;
-var svg=d3.select("#container").append("svg").attr("width",W).attr("height",H);
-var g=svg.append("g");
-svg.call(d3.zoom().scaleExtent([.2,4]).on("zoom",function(event){{g.attr("transform",event.transform);}}));
-var sim=d3.forceSimulation(nodes)
-  .force("link",d3.forceLink(edges).id(function(d){{return d.id;}}).distance(80).strength(.3))
-  .force("charge",d3.forceManyBody().strength(-200))
-  .force("center",d3.forceCenter(W/2,H/2))
-  .force("collide",d3.forceCollide(18));
-var link=g.append("g").selectAll("line").data(edges).enter().append("line")
-  .attr("stroke","#bbb").attr("stroke-width",function(d){{return Math.max(1,Math.min(d.weight*.4,6));}}).attr("opacity",.4);
-var node=g.append("g").selectAll("g").data(nodes).enter().append("g").style("cursor","pointer")
-  .call(d3.drag().on("start",function(ev,d){{if(!ev.active)sim.alphaTarget(.3).restart();d.fx=d.x;d.fy=d.y;}})
+    <!DOCTYPE html><html><head>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+    * {{ box-sizing:border-box; }}
+    body {{ margin:0; font-family:'Segoe UI',sans-serif; background:#fafafa; }}
+    #container {{ width:100%; height:500px; background:white; border:1px solid #ddd; border-radius:6px; position:relative; overflow:hidden; }}
+    #stats {{ position:absolute; top:8px; left:10px; font-size:11px; color:#666; background:rgba(255,255,255,.9);
+      padding:3px 8px; border-radius:4px; border:1px solid #eee; z-index:10; }}
+    .tooltip {{ position:fixed; background:white; border:1px solid #ccc; border-radius:6px;
+      padding:8px 12px; font-size:12px; pointer-events:none; box-shadow:2px 2px 6px rgba(0,0,0,.15);
+      display:none; z-index:1000; }}
+    </style></head><body>
+    <div id="container"><div id="stats">{_title}: {_nn} nodes &middot; {_ne} edges</div></div>
+    <div class="tooltip" id="tooltip"></div>
+    <script>
+    try {{
+    var nodes={_nj}, edges={_ej};
+    var tooltip=d3.select("#tooltip");
+    var el=document.getElementById("container"), W=el.offsetWidth||700, H=500;
+    var svg=d3.select("#container").append("svg").attr("width",W).attr("height",H);
+    var g=svg.append("g");
+    svg.call(d3.zoom().scaleExtent([.2,4]).on("zoom",function(event){{g.attr("transform",event.transform);}}));
+    var sim=d3.forceSimulation(nodes)
+      .force("link",d3.forceLink(edges).id(function(d){{return d.id;}}).distance(80).strength(.3))
+      .force("charge",d3.forceManyBody().strength(-200))
+      .force("center",d3.forceCenter(W/2,H/2))
+      .force("collide",d3.forceCollide(18));
+    var link=g.append("g").selectAll("line").data(edges).enter().append("line")
+      .attr("stroke","#bbb").attr("stroke-width",function(d){{return Math.max(1,Math.min(d.weight*.4,6));}}).attr("opacity",.4);
+    var node=g.append("g").selectAll("g").data(nodes).enter().append("g").style("cursor","pointer")
+      .call(d3.drag().on("start",function(ev,d){{if(!ev.active)sim.alphaTarget(.3).restart();d.fx=d.x;d.fy=d.y;}})
     .on("drag",function(ev,d){{d.fx=ev.x;d.fy=ev.y;}})
     .on("end",function(ev,d){{if(!ev.active)sim.alphaTarget(0);d.fx=null;d.fy=null;}}));
-node.append("circle").attr("r",10).attr("fill",function(d){{return d.color;}}).attr("stroke","#555").attr("stroke-width",1.2);
-node.append("text").attr("dx",13).attr("dy",4).style("font-size","10px").style("fill","#333").text(function(d){{return d.id;}});
-node.on("mouseover",function(event,d){{
-  link.attr("opacity",function(l){{var s=l.source.id||l.source,t=l.target.id||l.target;return(s===d.id||t===d.id)?.8:.05;}});
-  node.select("circle").attr("opacity",function(n){{if(n.id===d.id)return 1;
+    node.append("circle").attr("r",10).attr("fill",function(d){{return d.color;}}).attr("stroke","#555").attr("stroke-width",1.2);
+    node.append("text").attr("dx",13).attr("dy",4).style("font-size","10px").style("fill","#333").text(function(d){{return d.id;}});
+    node.on("mouseover",function(event,d){{
+      link.attr("opacity",function(l){{var s=l.source.id||l.source,t=l.target.id||l.target;return(s===d.id||t===d.id)?.8:.05;}});
+      node.select("circle").attr("opacity",function(n){{if(n.id===d.id)return 1;
     return edges.some(function(l){{var s=l.source.id||l.source,t=l.target.id||l.target;return(s===d.id&&t===n.id)||(t===d.id&&s===n.id);}})?1:.15;}});
-  tooltip.style("display","block").html("<strong>"+d.id+"</strong><br/>"+d.sub_type)
+      tooltip.style("display","block").html("<strong>"+d.id+"</strong><br/>"+d.sub_type)
     .style("left",(event.clientX+14)+"px").style("top",(event.clientY-20)+"px");
-}}).on("mouseout",function(){{link.attr("opacity",.4);node.select("circle").attr("opacity",1);tooltip.style("display","none");}});
-sim.on("tick",function(){{
-  link.attr("x1",function(d){{return d.source.x;}}).attr("y1",function(d){{return d.source.y;}})
+    }}).on("mouseout",function(){{link.attr("opacity",.4);node.select("circle").attr("opacity",1);tooltip.style("display","none");}});
+    sim.on("tick",function(){{
+      link.attr("x1",function(d){{return d.source.x;}}).attr("y1",function(d){{return d.source.y;}})
     .attr("x2",function(d){{return d.target.x;}}).attr("y2",function(d){{return d.target.y;}});
-  node.attr("transform",function(d){{return "translate("+d.x+","+d.y+")";}});
-}});
-}} catch(e){{ document.getElementById("container").innerHTML="<pre style='color:red'>"+e.message+"</pre>"; }}
-</script></body></html>
+      node.attr("transform",function(d){{return "translate("+d.x+","+d.y+")";}});
+    }});
+    }} catch(e){{ document.getElementById("container").innerHTML="<pre style='color:red'>"+e.message+"</pre>"; }}
+    </script></body></html>
     """, width="100%", height="520px")
 
     q2b_community_graph = _comm_graph_iframe
@@ -3054,82 +3041,82 @@ def _(json_lib, mo, plot_df):
     _n_topics = len(_topics_unique)
 
     q2b_umap = mo.iframe(f"""
-<!DOCTYPE html><html><head>
-<script src="https://d3js.org/d3.v7.min.js"></script>
-<style>
-* {{ box-sizing: border-box; }}
-body {{ margin:0; font-family:'Segoe UI',sans-serif; background:#fafafa; }}
-#container {{ width:100%; height:620px; background:white; border:1px solid #ddd;
+    <!DOCTYPE html><html><head>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+    * {{ box-sizing: border-box; }}
+    body {{ margin:0; font-family:'Segoe UI',sans-serif; background:#fafafa; }}
+    #container {{ width:100%; height:620px; background:white; border:1px solid #ddd;
              border-radius:6px; position:relative; overflow:hidden; }}
-#stats {{
+    #stats {{
     position:absolute; top:8px; left:10px; font-size:11px; color:#666;
     background:rgba(255,255,255,.9); padding:4px 10px; border-radius:4px;
     border:1px solid #eee; z-index:10;
-}}
-#legend {{
+    }}
+    #legend {{
     position:absolute; top:8px; right:12px; font-size:10px;
     background:rgba(255,255,255,.92); border:1px solid #ddd;
     border-radius:6px; padding:8px 10px; max-height:580px; overflow-y:auto; z-index:10;
     max-width:200px;
-}}
-.leg-row {{ display:flex; align-items:center; gap:5px; margin:2px 0; cursor:pointer; }}
-.leg-row:hover {{ background:#f5f5f5; }}
-.leg-swatch {{ width:10px; height:10px; border-radius:50%; flex-shrink:0; }}
-.leg-label {{ white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }}
-.tooltip {{
+    }}
+    .leg-row {{ display:flex; align-items:center; gap:5px; margin:2px 0; cursor:pointer; }}
+    .leg-row:hover {{ background:#f5f5f5; }}
+    .leg-swatch {{ width:10px; height:10px; border-radius:50%; flex-shrink:0; }}
+    .leg-label {{ white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }}
+    .tooltip {{
     position:fixed; background:white; border:1px solid #ccc; border-radius:6px;
     padding:8px 12px; font-size:12px; pointer-events:none;
     box-shadow:2px 2px 6px rgba(0,0,0,.15); display:none;
     max-width:320px; z-index:1000;
-}}
-#hint {{
+    }}
+    #hint {{
     position:absolute; bottom:6px; left:10px; font-size:10px; color:#aaa;
-}}
-</style></head><body>
-<div id="container">
+    }}
+    </style></head><body>
+    <div id="container">
     <div id="stats">{_n_docs} documents &middot; {_n_topics} topics</div>
     <div id="legend"></div>
     <div id="hint">Scroll to zoom &middot; Drag to pan &middot; Click legend to filter</div>
-</div>
-<div class="tooltip" id="tooltip"></div>
-<script>
-try {{
+    </div>
+    <div class="tooltip" id="tooltip"></div>
+    <script>
+    try {{
 
-var data = {_scatter_json};
-var topicNames = {_topics_json};
-var tooltip = d3.select("#tooltip");
+    var data = {_scatter_json};
+    var topicNames = {_topics_json};
+    var tooltip = d3.select("#tooltip");
 
-var el = document.getElementById("container");
-var W = el.offsetWidth || 900, H = 620;
-var margin = {{top: 40, right: 220, bottom: 30, left: 40}};
-var plotW = W - margin.left - margin.right;
-var plotH = H - margin.top - margin.bottom;
+    var el = document.getElementById("container");
+    var W = el.offsetWidth || 900, H = 620;
+    var margin = {{top: 40, right: 220, bottom: 30, left: 40}};
+    var plotW = W - margin.left - margin.right;
+    var plotH = H - margin.top - margin.bottom;
 
-var svg = d3.select("#container").append("svg").attr("width", W).attr("height", H);
-var g = svg.append("g").attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+    var svg = d3.select("#container").append("svg").attr("width", W).attr("height", H);
+    var g = svg.append("g").attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
-// Zoom on the plot area
-var zoomG = g.append("g");
-svg.call(d3.zoom().scaleExtent([0.5, 10]).on("zoom", function(event) {{
+    // Zoom on the plot area
+    var zoomG = g.append("g");
+    svg.call(d3.zoom().scaleExtent([0.5, 10]).on("zoom", function(event) {{
     zoomG.attr("transform", event.transform);
-}}));
+    }}));
 
-// Clip path
-svg.append("defs").append("clipPath").attr("id", "plot-clip")
+    // Clip path
+    svg.append("defs").append("clipPath").attr("id", "plot-clip")
     .append("rect").attr("width", plotW).attr("height", plotH);
-zoomG.attr("clip-path", "url(#plot-clip)");
+    zoomG.attr("clip-path", "url(#plot-clip)");
 
-var color = d3.scaleOrdinal(d3.schemeTableau10).domain(topicNames);
+    var color = d3.scaleOrdinal(d3.schemeTableau10).domain(topicNames);
 
-var xExtent = d3.extent(data, function(d) {{ return d.x; }});
-var yExtent = d3.extent(data, function(d) {{ return d.y; }});
-var xPad = (xExtent[1] - xExtent[0]) * 0.05;
-var yPad = (yExtent[1] - yExtent[0]) * 0.05;
-var x = d3.scaleLinear().domain([xExtent[0]-xPad, xExtent[1]+xPad]).range([0, plotW]);
-var y = d3.scaleLinear().domain([yExtent[0]-yPad, yExtent[1]+yPad]).range([plotH, 0]);
+    var xExtent = d3.extent(data, function(d) {{ return d.x; }});
+    var yExtent = d3.extent(data, function(d) {{ return d.y; }});
+    var xPad = (xExtent[1] - xExtent[0]) * 0.05;
+    var yPad = (yExtent[1] - yExtent[0]) * 0.05;
+    var x = d3.scaleLinear().domain([xExtent[0]-xPad, xExtent[1]+xPad]).range([0, plotW]);
+    var y = d3.scaleLinear().domain([yExtent[0]-yPad, yExtent[1]+yPad]).range([plotH, 0]);
 
-// Draw dots
-var dots = zoomG.selectAll("circle").data(data).enter().append("circle")
+    // Draw dots
+    var dots = zoomG.selectAll("circle").data(data).enter().append("circle")
     .attr("cx", function(d) {{ return x(d.x); }})
     .attr("cy", function(d) {{ return y(d.y); }})
     .attr("r", 4.5)
@@ -3138,7 +3125,7 @@ var dots = zoomG.selectAll("circle").data(data).enter().append("circle")
     .attr("stroke", "white")
     .attr("stroke-width", 0.5);
 
-dots.on("mouseover", function(event, d) {{
+    dots.on("mouseover", function(event, d) {{
     d3.select(this).attr("r", 7).attr("opacity", 1).attr("stroke", "#333").attr("stroke-width", 1.5);
     tooltip.style("display", "block")
         .html("<div style='font-weight:bold;color:" + color(d.topic) + "'>" + d.topic + "</div>"
@@ -3146,17 +3133,17 @@ dots.on("mouseover", function(event, d) {{
             + "<div style='font-size:11px;color:#555;max-width:280px'>" + d.content + "</div>")
         .style("left", (event.clientX + 14) + "px")
         .style("top", (event.clientY - 20) + "px");
-}}).on("mouseout", function() {{
+    }}).on("mouseout", function() {{
     d3.select(this).attr("r", 4.5).attr("opacity", 0.7).attr("stroke", "white").attr("stroke-width", 0.5);
     tooltip.style("display", "none");
-}});
+    }});
 
-// Legend with toggle
-var activeTopics = new Set(topicNames);
-var legend = d3.select("#legend");
-legend.append("div").style("font-weight", "bold").style("margin-bottom", "4px").text("Topics");
+    // Legend with toggle
+    var activeTopics = new Set(topicNames);
+    var legend = d3.select("#legend");
+    legend.append("div").style("font-weight", "bold").style("margin-bottom", "4px").text("Topics");
 
-topicNames.forEach(function(t) {{
+    topicNames.forEach(function(t) {{
     var row = legend.append("div").attr("class", "leg-row").on("click", function() {{
         if (activeTopics.has(t)) {{ activeTopics.delete(t); }} else {{ activeTopics.add(t); }}
         d3.select(this).select(".leg-swatch").style("opacity", activeTopics.has(t) ? 1 : 0.2);
@@ -3166,20 +3153,20 @@ topicNames.forEach(function(t) {{
     row.append("div").attr("class", "leg-swatch").style("background", color(t));
     var label = t.length > 25 ? t.substring(0, 25) + "…" : t;
     row.append("div").attr("class", "leg-label").text(label).attr("title", t);
-}});
+    }});
 
-// Title
-svg.append("text").attr("x", W/2).attr("y", 18).attr("text-anchor", "middle")
+    // Title
+    svg.append("text").attr("x", W/2).attr("y", 18).attr("text-anchor", "middle")
     .style("font-size", "14px").style("font-weight", "bold").style("fill", "#333")
     .text("Topic Clusters — UMAP Document Embeddings");
-svg.append("text").attr("x", W/2).attr("y", 32).attr("text-anchor", "middle")
+    svg.append("text").attr("x", W/2).attr("y", 32).attr("text-anchor", "middle")
     .style("font-size", "10px").style("fill", "#888")
     .text("Each dot is a message, colored by BERTopic cluster. Click legend to filter.");
 
-}} catch(e) {{
+    }} catch(e) {{
     document.getElementById("container").innerHTML = "<pre style='color:red'>" + e.message + "\\n" + e.stack + "</pre>";
-}}
-</script></body></html>
+    }}
+    </script></body></html>
     """, width="100%", height="640px")
     return (q2b_umap,)
 
@@ -3212,8 +3199,7 @@ def _(pd):
             "data/topics_df.csv not found. "
             "Run 'python save_topic_cache.py' once to generate topic model cache."
         )
-    return topic_label_map, topics_df
-
+    return (topics_df,)
 
 
 @app.cell
@@ -3499,42 +3485,42 @@ def _(json_lib, likely_pseudonyms, mo):
     _n = len(_data)
 
     _bar_iframe = mo.iframe(f"""
-<!DOCTYPE html><html><head><script src="https://d3js.org/d3.v7.min.js"></script>
-<style>
-* {{ box-sizing:border-box; }} body {{ margin:0; font-family:'Segoe UI',sans-serif; background:#fafafa; }}
-#container {{ background:white; border:1px solid #ddd; border-radius:6px; padding:14px; }}
-.tooltip {{ position:fixed; background:white; border:1px solid #ccc; border-radius:6px; padding:8px 12px;
-  font-size:12px; pointer-events:none; box-shadow:2px 2px 6px rgba(0,0,0,.15); display:none; z-index:1000; max-width:300px; }}
-.bar:hover {{ opacity:.8; cursor:pointer; }}
-</style></head><body>
-<div id="container"><div id="chart"></div></div>
-<div class="tooltip" id="tooltip"></div>
-<script>
-try {{
-var data={_dj}, tooltip=d3.select("#tooltip");
-var m={{top:10,right:120,bottom:30,left:140}}, barH=28, W=700;
-var H=data.length*barH+m.top+m.bottom;
-var svg=d3.select("#chart").append("svg").attr("width",W).attr("height",H);
-var g=svg.append("g").attr("transform","translate("+m.left+","+m.top+")");
-var maxS=d3.max(data,function(d){{return d.pseudonym_score;}})||1;
-var x=d3.scaleLinear().domain([0,maxS+0.5]).range([0,W-m.left-m.right]);
-var y=d3.scaleBand().domain(data.map(function(d){{return d.label;}})).range([0,H-m.top-m.bottom]).padding(.15);
-g.selectAll("rect").data(data).enter().append("rect").attr("class","bar")
-  .attr("x",0).attr("y",function(d){{return y(d.label);}}).attr("height",y.bandwidth())
-  .attr("width",function(d){{return x(d.pseudonym_score);}}).attr("fill","#FFD700").attr("stroke","#B8860B").attr("stroke-width",1).attr("rx",3)
-  .on("mouseover",function(event,d){{ d3.select(this).attr("opacity",.8);
+    <!DOCTYPE html><html><head><script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+    * {{ box-sizing:border-box; }} body {{ margin:0; font-family:'Segoe UI',sans-serif; background:#fafafa; }}
+    #container {{ background:white; border:1px solid #ddd; border-radius:6px; padding:14px; }}
+    .tooltip {{ position:fixed; background:white; border:1px solid #ccc; border-radius:6px; padding:8px 12px;
+      font-size:12px; pointer-events:none; box-shadow:2px 2px 6px rgba(0,0,0,.15); display:none; z-index:1000; max-width:300px; }}
+    .bar:hover {{ opacity:.8; cursor:pointer; }}
+    </style></head><body>
+    <div id="container"><div id="chart"></div></div>
+    <div class="tooltip" id="tooltip"></div>
+    <script>
+    try {{
+    var data={_dj}, tooltip=d3.select("#tooltip");
+    var m={{top:10,right:120,bottom:30,left:140}}, barH=28, W=700;
+    var H=data.length*barH+m.top+m.bottom;
+    var svg=d3.select("#chart").append("svg").attr("width",W).attr("height",H);
+    var g=svg.append("g").attr("transform","translate("+m.left+","+m.top+")");
+    var maxS=d3.max(data,function(d){{return d.pseudonym_score;}})||1;
+    var x=d3.scaleLinear().domain([0,maxS+0.5]).range([0,W-m.left-m.right]);
+    var y=d3.scaleBand().domain(data.map(function(d){{return d.label;}})).range([0,H-m.top-m.bottom]).padding(.15);
+    g.selectAll("rect").data(data).enter().append("rect").attr("class","bar")
+      .attr("x",0).attr("y",function(d){{return y(d.label);}}).attr("height",y.bandwidth())
+      .attr("width",function(d){{return x(d.pseudonym_score);}}).attr("fill","#FFD700").attr("stroke","#B8860B").attr("stroke-width",1).attr("rx",3)
+      .on("mouseover",function(event,d){{ d3.select(this).attr("opacity",.8);
     tooltip.style("display","block").html("<strong>"+d.label+"</strong><br/>Type: "+d.sub_type+"<br/>Patterns: "+d.detected_patterns+"<br/>Score: <b>"+d.pseudonym_score+"</b>")
       .style("left",(event.clientX+14)+"px").style("top",(event.clientY-20)+"px"); }})
-  .on("mouseout",function(){{ d3.select(this).attr("opacity",1); tooltip.style("display","none"); }});
-g.selectAll(".lbl").data(data).enter().append("text").attr("x",-6)
-  .attr("y",function(d){{return y(d.label)+y.bandwidth()/2;}}).attr("dy",".35em").attr("text-anchor","end")
-  .style("font-size","11px").style("fill","#333").style("font-weight","bold").text(function(d){{return d.label;}});
-g.selectAll(".pat").data(data).enter().append("text")
-  .attr("x",function(d){{return x(d.pseudonym_score)+5;}}).attr("y",function(d){{return y(d.label)+y.bandwidth()/2;}})
-  .attr("dy",".35em").style("font-size","9px").style("fill","#888").text(function(d){{return d.detected_patterns;}});
-g.append("g").attr("transform","translate(0,"+(H-m.top-m.bottom)+")").call(d3.axisBottom(x).ticks(maxS));
-}} catch(e){{ document.getElementById("container").innerHTML="<pre style='color:red'>"+e.message+"</pre>"; }}
-</script></body></html>
+      .on("mouseout",function(){{ d3.select(this).attr("opacity",1); tooltip.style("display","none"); }});
+    g.selectAll(".lbl").data(data).enter().append("text").attr("x",-6)
+      .attr("y",function(d){{return y(d.label)+y.bandwidth()/2;}}).attr("dy",".35em").attr("text-anchor","end")
+      .style("font-size","11px").style("fill","#333").style("font-weight","bold").text(function(d){{return d.label;}});
+    g.selectAll(".pat").data(data).enter().append("text")
+      .attr("x",function(d){{return x(d.pseudonym_score)+5;}}).attr("y",function(d){{return y(d.label)+y.bandwidth()/2;}})
+      .attr("dy",".35em").style("font-size","9px").style("fill","#888").text(function(d){{return d.detected_patterns;}});
+    g.append("g").attr("transform","translate(0,"+(H-m.top-m.bottom)+")").call(d3.axisBottom(x).ticks(maxS));
+    }} catch(e){{ document.getElementById("container").innerHTML="<pre style='color:red'>"+e.message+"</pre>"; }}
+    </script></body></html>
     """, width="100%", height=f"{max(400, _n * 30 + 60)}px")
 
     q3_pseudonym_bar = mo.vstack([
@@ -3725,41 +3711,41 @@ def _(
     _panel_h = max(600, (len(_pseudo_list) + len(_partner_list)) * 18)
 
     _bipartite_viz = mo.iframe(f"""
-<!DOCTYPE html>
-<html>
-<head>
-<script src="https://d3js.org/d3.v7.min.js"></script>
-<style>
-* {{ box-sizing: border-box; }}
-body {{ margin: 0; font-family: 'Segoe UI', sans-serif; background: #fafafa; }}
-#container {{ width: 100%; height: {_panel_h}px; position: relative; background: white;
+    <!DOCTYPE html>
+    <html>
+    <head>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+    * {{ box-sizing: border-box; }}
+    body {{ margin: 0; font-family: 'Segoe UI', sans-serif; background: #fafafa; }}
+    #container {{ width: 100%; height: {_panel_h}px; position: relative; background: white;
               border: 1px solid #ddd; border-radius: 6px; overflow: hidden; }}
-#stats {{
+    #stats {{
     position: absolute; top: 8px; left: 10px; font-size: 11px; color: #666;
     background: rgba(255,255,255,0.9); padding: 4px 10px;
     border-radius: 4px; border: 1px solid #eee; pointer-events: none; z-index: 10;
-}}
-#hint {{
+    }}
+    #hint {{
     position: absolute; bottom: 6px; left: 10px; font-size: 10px; color: #aaa;
     pointer-events: none;
-}}
-#legend {{
+    }}
+    #legend {{
     position: absolute; top: 8px; right: 12px; font-size: 11px;
     background: rgba(255,255,255,0.92); border: 1px solid #ddd;
     border-radius: 6px; padding: 8px 12px; z-index: 10;
-}}
-.leg-row {{ display: flex; align-items: center; gap: 6px; margin: 3px 0; }}
-.leg-swatch {{ width: 12px; height: 12px; border-radius: 50%; }}
-#tooltip {{
+    }}
+    .leg-row {{ display: flex; align-items: center; gap: 6px; margin: 3px 0; }}
+    .leg-swatch {{ width: 12px; height: 12px; border-radius: 50%; }}
+    #tooltip {{
     position: fixed; background: white; border: 1px solid #ccc; border-radius: 6px;
     padding: 8px 12px; font-size: 12px; pointer-events: none;
     box-shadow: 2px 2px 6px rgba(0,0,0,0.15); display: none;
     max-width: 320px; z-index: 1000;
-}}
-</style>
-</head>
-<body>
-<div id="container">
+    }}
+    </style>
+    </head>
+    <body>
+    <div id="container">
     <div id="stats">{_n_pseudo} pseudonyms &nbsp;&middot;&nbsp; {_n_partners} partners &nbsp;&middot;&nbsp; {_n_edges} edges</div>
     <div id="hint">Drag nodes to reposition &nbsp;&middot;&nbsp; Hover for details</div>
     <div id="legend">
@@ -3771,70 +3757,70 @@ body {{ margin: 0; font-family: 'Segoe UI', sans-serif; background: #fafafa; }}
         <div style="font-weight:bold;margin-top:6px;margin-bottom:2px">Edge</div>
         <div class="leg-row" style="font-size:10px;color:#888">Width = message count</div>
     </div>
-</div>
-<div id="tooltip"></div>
+    </div>
+    <div id="tooltip"></div>
 
-<script>
-try {{
+    <script>
+    try {{
 
-var nodes = {_nodes_json};
-var edges = {_edges_json};
+    var nodes = {_nodes_json};
+    var edges = {_edges_json};
 
-var partnerColors = {{
+    var partnerColors = {{
     "Person": "#4ECDC4", "Vessel": "#FF6B6B",
     "Organization": "#95E1D3", "Group": "#F38181"
-}};
+    }};
 
-var container = document.getElementById("container");
-var W = container.offsetWidth || 900;
-var H = container.offsetHeight || 600;
+    var container = document.getElementById("container");
+    var W = container.offsetWidth || 900;
+    var H = container.offsetHeight || 600;
 
-var svg = d3.select("#container").append("svg")
+    var svg = d3.select("#container").append("svg")
     .attr("width", W).attr("height", H);
 
-var tooltip = d3.select("#tooltip");
-var g = svg.append("g");
+    var tooltip = d3.select("#tooltip");
+    var g = svg.append("g");
 
-// Zoom
-svg.call(d3.zoom().scaleExtent([0.3, 4]).on("zoom", function(event) {{
+    // Zoom
+    svg.call(d3.zoom().scaleExtent([0.3, 4]).on("zoom", function(event) {{
     g.attr("transform", event.transform);
-}}));
+    }}));
 
-// Node radius based on volume
-var maxVol = d3.max(nodes, function(d) {{ return d.volume; }}) || 1;
-function nodeR(d) {{
+    // Node radius based on volume
+    var maxVol = d3.max(nodes, function(d) {{ return d.volume; }}) || 1;
+    function nodeR(d) {{
     return Math.max(6, Math.min(22, 6 + (d.volume / maxVol) * 16));
-}}
+    }}
 
-// Bipartite x positions
-var pseudoX = W * 0.22;
-var partnerX = W * 0.72;
+    // Bipartite x positions
+    var pseudoX = W * 0.22;
+    var partnerX = W * 0.72;
 
-// Initial y positions
-var pseudoNodes = nodes.filter(function(d) {{ return d.group === "pseudonym"; }});
-var partnerNodes = nodes.filter(function(d) {{ return d.group === "partner"; }});
+    // Initial y positions
+    var pseudoNodes = nodes.filter(function(d) {{ return d.group === "pseudonym"; }});
+    var partnerNodes = nodes.filter(function(d) {{ return d.group === "partner"; }});
 
-pseudoNodes.forEach(function(d, i) {{
+    pseudoNodes.forEach(function(d, i) {{
     d.x = pseudoX;
     d.y = 40 + (H - 80) * i / Math.max(1, pseudoNodes.length - 1);
     d.fx = null;
-}});
-partnerNodes.forEach(function(d, i) {{
+    }});
+    partnerNodes.forEach(function(d, i) {{
     d.x = partnerX;
     d.y = 40 + (H - 80) * i / Math.max(1, partnerNodes.length - 1);
     d.fx = null;
-}});
+    }});
 
-// Force simulation with bipartite pull
-var simulation = d3.forceSimulation(nodes)
+    // Force simulation with bipartite pull
+    var simulation = d3.forceSimulation(nodes)
     .force("link", d3.forceLink(edges).id(function(d) {{ return d.id; }}).distance(200).strength(0.15))
     .force("charge", d3.forceManyBody().strength(-60))
     .force("y", d3.forceY(H / 2).strength(0.02))
     .force("x", d3.forceX(function(d) {{ return d.group === "pseudonym" ? pseudoX : partnerX; }}).strength(0.3))
     .force("collide", d3.forceCollide(function(d) {{ return nodeR(d) + 8; }}));
 
-// Arrow marker
-svg.append("defs").append("marker")
+    // Arrow marker
+    svg.append("defs").append("marker")
     .attr("id", "bp-arrow")
     .attr("viewBox", "0 -5 10 10")
     .attr("refX", 18).attr("refY", 0)
@@ -3842,16 +3828,16 @@ svg.append("defs").append("marker")
     .attr("orient", "auto")
     .append("path").attr("d", "M0,-4L10,0L0,4").attr("fill", "#aaa");
 
-// Draw edges
-var edgeSel = g.append("g").selectAll("line")
+    // Draw edges
+    var edgeSel = g.append("g").selectAll("line")
     .data(edges).enter().append("line")
     .attr("stroke", "#bbb")
     .attr("stroke-width", function(d) {{ return Math.max(1, Math.min(d.weight * 0.6, 8)); }})
     .attr("opacity", 0.4)
     .attr("marker-end", "url(#bp-arrow)");
 
-// Invisible wide edge targets for hovering
-var edgeHover = g.append("g").selectAll("line")
+    // Invisible wide edge targets for hovering
+    var edgeHover = g.append("g").selectAll("line")
     .data(edges).enter().append("line")
     .attr("stroke", "transparent")
     .attr("stroke-width", 14)
@@ -3873,8 +3859,8 @@ var edgeHover = g.append("g").selectAll("line")
         tooltip.style("display", "none");
     }});
 
-// Draw nodes
-var nodeSel = g.append("g").selectAll("g")
+    // Draw nodes
+    var nodeSel = g.append("g").selectAll("g")
     .data(nodes).enter().append("g")
     .style("cursor", "pointer")
     .call(d3.drag()
@@ -3889,7 +3875,7 @@ var nodeSel = g.append("g").selectAll("g")
         }})
     );
 
-nodeSel.append("circle")
+    nodeSel.append("circle")
     .attr("r", function(d) {{ return nodeR(d); }})
     .attr("fill", function(d) {{
         if (d.group === "pseudonym") return "#FFD700";
@@ -3901,7 +3887,7 @@ nodeSel.append("circle")
     }})
     .attr("stroke-width", function(d) {{ return d.group === "pseudonym" ? 2.5 : 1.2; }});
 
-nodeSel.append("text")
+    nodeSel.append("text")
     .attr("dx", function(d) {{ return d.group === "pseudonym" ? -(nodeR(d) + 5) : (nodeR(d) + 5); }})
     .attr("dy", 4)
     .attr("text-anchor", function(d) {{ return d.group === "pseudonym" ? "end" : "start"; }})
@@ -3911,8 +3897,8 @@ nodeSel.append("text")
     .style("pointer-events", "none")
     .text(function(d) {{ return d.label.length > 20 ? d.label.substring(0,20) + "\\u2026" : d.label; }});
 
-// Hover highlight
-nodeSel.on("mouseover", function(event, d) {{
+    // Hover highlight
+    nodeSel.on("mouseover", function(event, d) {{
     d3.select(this).select("circle").attr("stroke", "#333").attr("stroke-width", 3);
     // Highlight connected edges
     edgeSel.attr("opacity", function(e) {{
@@ -3962,8 +3948,8 @@ nodeSel.on("mouseover", function(event, d) {{
             + "</div>")
         .style("left", (event.clientX + 14) + "px")
         .style("top", (event.clientY - 20) + "px");
-}})
-.on("mouseout", function(event, d) {{
+    }})
+    .on("mouseout", function(event, d) {{
     d3.select(this).select("circle")
         .attr("stroke", d.group === "pseudonym" ? "#B8860B" : "#555")
         .attr("stroke-width", d.group === "pseudonym" ? 2.5 : 1.2);
@@ -3971,20 +3957,20 @@ nodeSel.on("mouseover", function(event, d) {{
     nodeSel.select("circle").attr("opacity", 1);
     nodeSel.select("text").attr("opacity", 1);
     tooltip.style("display", "none");
-}});
+    }});
 
-// Column labels
-svg.append("text").attr("x", pseudoX).attr("y", 20)
+    // Column labels
+    svg.append("text").attr("x", pseudoX).attr("y", 20)
     .attr("text-anchor", "middle").style("font-size", "13px")
     .style("font-weight", "bold").style("fill", "#B8860B")
     .text("Pseudonyms (" + pseudoNodes.length + ")");
-svg.append("text").attr("x", partnerX).attr("y", 20)
+    svg.append("text").attr("x", partnerX).attr("y", 20)
     .attr("text-anchor", "middle").style("font-size", "13px")
     .style("font-weight", "bold").style("fill", "#2E8B8B")
     .text("Communication Partners (" + partnerNodes.length + ")");
 
-// Tick
-simulation.on("tick", function() {{
+    // Tick
+    simulation.on("tick", function() {{
     edgeSel
         .attr("x1", function(d) {{ return d.source.x; }})
         .attr("y1", function(d) {{ return d.source.y; }})
@@ -3996,14 +3982,14 @@ simulation.on("tick", function() {{
         .attr("x2", function(d) {{ return d.target.x; }})
         .attr("y2", function(d) {{ return d.target.y; }});
     nodeSel.attr("transform", function(d) {{ return "translate(" + d.x + "," + d.y + ")"; }});
-}});
+    }});
 
-}} catch(e) {{
+    }} catch(e) {{
     document.getElementById("container").innerHTML = "<pre style='color:red'>" + e.message + "\\n" + e.stack + "</pre>";
-}}
-</script>
-</body>
-</html>
+    }}
+    </script>
+    </body>
+    </html>
     """, width="100%", height=f"{_panel_h + 20}px")
 
     _n_shared = len(set(_p for (_s, _t) in _edge_agg for _p in [_s, _t] if _p in _partner_ids))
@@ -4086,39 +4072,39 @@ def _(
             _n = len(_ordered_labels)
 
             _hm_iframe = mo.iframe(f"""
-<!DOCTYPE html><html><head><script src="https://d3js.org/d3.v7.min.js"></script>
-<style>
-* {{ box-sizing:border-box; }} body {{ margin:0; font-family:'Segoe UI',sans-serif; background:#fafafa; }}
-#container {{ background:white; border:1px solid #ddd; border-radius:6px; padding:10px; overflow:auto; }}
-.tooltip {{ position:fixed; background:white; border:1px solid #ccc; border-radius:6px; padding:8px 12px;
-  font-size:12px; pointer-events:none; box-shadow:2px 2px 6px rgba(0,0,0,.15); display:none; z-index:1000; }}
-</style></head><body>
-<div id="container"><div id="chart"></div></div>
-<div class="tooltip" id="tooltip"></div>
-<script>
-try {{
-var data={_data_json}, labels={_labels_json}, n={_n};
-var tooltip=d3.select("#tooltip");
-var cs=Math.max(10, Math.min(20, 600/n));
-var m={{top:10,right:20,bottom:100,left:100}};
-var W=n*cs+m.left+m.right, H=n*cs+m.top+m.bottom;
-var svg=d3.select("#chart").append("svg").attr("width",W).attr("height",H);
-var g=svg.append("g").attr("transform","translate("+m.left+","+m.top+")");
-var color=d3.scaleSequential(d3.interpolateViridis).domain([0,d3.max(data,function(d){{return d.v;}})||1]);
-g.selectAll("rect").data(data).enter().append("rect")
-  .attr("x",function(d){{return d.x*cs;}}).attr("y",function(d){{return d.y*cs;}})
-  .attr("width",cs-1).attr("height",cs-1).attr("fill",function(d){{return color(d.v);}}).attr("rx",1)
-  .on("mouseover",function(event,d){{ d3.select(this).attr("stroke","#fff").attr("stroke-width",2);
+    <!DOCTYPE html><html><head><script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+    * {{ box-sizing:border-box; }} body {{ margin:0; font-family:'Segoe UI',sans-serif; background:#fafafa; }}
+    #container {{ background:white; border:1px solid #ddd; border-radius:6px; padding:10px; overflow:auto; }}
+    .tooltip {{ position:fixed; background:white; border:1px solid #ccc; border-radius:6px; padding:8px 12px;
+      font-size:12px; pointer-events:none; box-shadow:2px 2px 6px rgba(0,0,0,.15); display:none; z-index:1000; }}
+    </style></head><body>
+    <div id="container"><div id="chart"></div></div>
+    <div class="tooltip" id="tooltip"></div>
+    <script>
+    try {{
+    var data={_data_json}, labels={_labels_json}, n={_n};
+    var tooltip=d3.select("#tooltip");
+    var cs=Math.max(10, Math.min(20, 600/n));
+    var m={{top:10,right:20,bottom:100,left:100}};
+    var W=n*cs+m.left+m.right, H=n*cs+m.top+m.bottom;
+    var svg=d3.select("#chart").append("svg").attr("width",W).attr("height",H);
+    var g=svg.append("g").attr("transform","translate("+m.left+","+m.top+")");
+    var color=d3.scaleSequential(d3.interpolateViridis).domain([0,d3.max(data,function(d){{return d.v;}})||1]);
+    g.selectAll("rect").data(data).enter().append("rect")
+      .attr("x",function(d){{return d.x*cs;}}).attr("y",function(d){{return d.y*cs;}})
+      .attr("width",cs-1).attr("height",cs-1).attr("fill",function(d){{return color(d.v);}}).attr("rx",1)
+      .on("mouseover",function(event,d){{ d3.select(this).attr("stroke","#fff").attr("stroke-width",2);
     tooltip.style("display","block").html("<b>"+labels[d.y]+"</b> ↔ <b>"+labels[d.x]+"</b><br/>Jaccard: <b>"+d.v.toFixed(3)+"</b>")
       .style("left",(event.clientX+14)+"px").style("top",(event.clientY-20)+"px"); }})
-  .on("mouseout",function(){{ d3.select(this).attr("stroke","none"); tooltip.style("display","none"); }});
-var x=d3.scaleBand().domain(d3.range(n)).range([0,n*cs]);
-g.append("g").attr("transform","translate(0,"+n*cs+")").call(d3.axisBottom(x).tickFormat(function(i){{return labels[i];}}))
-  .selectAll("text").attr("transform","rotate(-45)").style("text-anchor","end").style("font-size","8px");
-g.append("g").call(d3.axisLeft(d3.scaleBand().domain(d3.range(n)).range([0,n*cs])).tickFormat(function(i){{return labels[i];}}))
-  .selectAll("text").style("font-size","8px");
-}} catch(e){{ document.getElementById("container").innerHTML="<pre style='color:red'>"+e.message+"</pre>"; }}
-</script></body></html>
+      .on("mouseout",function(){{ d3.select(this).attr("stroke","none"); tooltip.style("display","none"); }});
+    var x=d3.scaleBand().domain(d3.range(n)).range([0,n*cs]);
+    g.append("g").attr("transform","translate(0,"+n*cs+")").call(d3.axisBottom(x).tickFormat(function(i){{return labels[i];}}))
+      .selectAll("text").attr("transform","rotate(-45)").style("text-anchor","end").style("font-size","8px");
+    g.append("g").call(d3.axisLeft(d3.scaleBand().domain(d3.range(n)).range([0,n*cs])).tickFormat(function(i){{return labels[i];}}))
+      .selectAll("text").style("font-size","8px");
+    }} catch(e){{ document.getElementById("container").innerHTML="<pre style='color:red'>"+e.message+"</pre>"; }}
+    </script></body></html>
             """, width="100%", height=f"{max(500, _n*20+180)}px")
         else:
             _hm_iframe = mo.md("*Insufficient similar entities for clustering*")
@@ -4167,7 +4153,6 @@ def _(
     json_lib,
     likely_pseudonyms,
     mo,
-    np,
     pd,
 ):
     _activity_data = []
@@ -4218,38 +4203,38 @@ def _(
             _nl = len(_labels)
 
             _temp_iframe = mo.iframe(f"""
-<!DOCTYPE html><html><head><script src="https://d3js.org/d3.v7.min.js"></script>
-<style>
-* {{ box-sizing:border-box; }} body {{ margin:0; font-family:'Segoe UI',sans-serif; background:#fafafa; }}
-#container {{ background:white; border:1px solid #ddd; border-radius:6px; padding:10px; overflow:auto; }}
-.tooltip {{ position:fixed; background:white; border:1px solid #ccc; border-radius:6px; padding:8px 12px;
-  font-size:12px; pointer-events:none; box-shadow:2px 2px 6px rgba(0,0,0,.15); display:none; z-index:1000; }}
-</style></head><body>
-<div id="container"><div id="chart"></div></div>
-<div class="tooltip" id="tooltip"></div>
-<script>
-try {{
-var data={_cj}, labels={_lj}, nL={_nl};
-var tooltip=d3.select("#tooltip");
-var cW=22, cH=18, m={{top:10,right:20,bottom:40,left:120}};
-var W=24*cW+m.left+m.right, H=nL*cH+m.top+m.bottom;
-var svg=d3.select("#chart").append("svg").attr("width",W).attr("height",H);
-var g=svg.append("g").attr("transform","translate("+m.left+","+m.top+")");
-var color=d3.scaleSequential(d3.interpolateYlOrRd).domain([0,1]);
-g.selectAll("rect").data(data).enter().append("rect")
-  .attr("x",function(d){{return d.x*cW;}}).attr("y",function(d){{return d.y*cH;}})
-  .attr("width",cW-1).attr("height",cH-1).attr("fill",function(d){{return color(d.v);}}).attr("rx",1)
-  .on("mouseover",function(event,d){{ d3.select(this).attr("stroke","#333").attr("stroke-width",1.5);
+    <!DOCTYPE html><html><head><script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+    * {{ box-sizing:border-box; }} body {{ margin:0; font-family:'Segoe UI',sans-serif; background:#fafafa; }}
+    #container {{ background:white; border:1px solid #ddd; border-radius:6px; padding:10px; overflow:auto; }}
+    .tooltip {{ position:fixed; background:white; border:1px solid #ccc; border-radius:6px; padding:8px 12px;
+      font-size:12px; pointer-events:none; box-shadow:2px 2px 6px rgba(0,0,0,.15); display:none; z-index:1000; }}
+    </style></head><body>
+    <div id="container"><div id="chart"></div></div>
+    <div class="tooltip" id="tooltip"></div>
+    <script>
+    try {{
+    var data={_cj}, labels={_lj}, nL={_nl};
+    var tooltip=d3.select("#tooltip");
+    var cW=22, cH=18, m={{top:10,right:20,bottom:40,left:120}};
+    var W=24*cW+m.left+m.right, H=nL*cH+m.top+m.bottom;
+    var svg=d3.select("#chart").append("svg").attr("width",W).attr("height",H);
+    var g=svg.append("g").attr("transform","translate("+m.left+","+m.top+")");
+    var color=d3.scaleSequential(d3.interpolateYlOrRd).domain([0,1]);
+    g.selectAll("rect").data(data).enter().append("rect")
+      .attr("x",function(d){{return d.x*cW;}}).attr("y",function(d){{return d.y*cH;}})
+      .attr("width",cW-1).attr("height",cH-1).attr("fill",function(d){{return color(d.v);}}).attr("rx",1)
+      .on("mouseover",function(event,d){{ d3.select(this).attr("stroke","#333").attr("stroke-width",1.5);
     tooltip.style("display","block").html("<b>"+labels[d.y]+"</b><br/>Hour: "+d.x+":00<br/>Activity: "+d.v.toFixed(2))
       .style("left",(event.clientX+14)+"px").style("top",(event.clientY-20)+"px"); }})
-  .on("mouseout",function(){{ d3.select(this).attr("stroke","none"); tooltip.style("display","none"); }});
-var yS=d3.scaleBand().domain(d3.range(nL)).range([0,nL*cH]);
-g.append("g").call(d3.axisLeft(yS).tickFormat(function(i){{return labels[i];}})).selectAll("text").style("font-size","9px");
-var xS=d3.scaleBand().domain(d3.range(24)).range([0,24*cW]);
-g.append("g").attr("transform","translate(0,"+nL*cH+")").call(d3.axisBottom(xS).tickFormat(function(h){{return h+":00";}}))
-  .selectAll("text").style("font-size","8px").attr("transform","rotate(-40)").style("text-anchor","end");
-}} catch(e){{ document.getElementById("container").innerHTML="<pre style='color:red'>"+e.message+"</pre>"; }}
-</script></body></html>
+      .on("mouseout",function(){{ d3.select(this).attr("stroke","none"); tooltip.style("display","none"); }});
+    var yS=d3.scaleBand().domain(d3.range(nL)).range([0,nL*cH]);
+    g.append("g").call(d3.axisLeft(yS).tickFormat(function(i){{return labels[i];}})).selectAll("text").style("font-size","9px");
+    var xS=d3.scaleBand().domain(d3.range(24)).range([0,24*cW]);
+    g.append("g").attr("transform","translate(0,"+nL*cH+")").call(d3.axisBottom(xS).tickFormat(function(h){{return h+":00";}}))
+      .selectAll("text").style("font-size","8px").attr("transform","rotate(-40)").style("text-anchor","end");
+    }} catch(e){{ document.getElementById("container").innerHTML="<pre style='color:red'>"+e.message+"</pre>"; }}
+    </script></body></html>
             """, width="100%", height=f"{max(400, _nl*20+80)}px")
         else:
             _temp_iframe = mo.md("*Insufficient active entities*")
@@ -4294,7 +4279,6 @@ def _(
     json_lib,
     likely_pseudonyms,
     mo,
-    np,
     nx,
     show_pseudonyms_only,
     sim_threshold,
@@ -4327,62 +4311,62 @@ def _(
         _ej = json_lib.dumps(_ed)
 
         _force_iframe = mo.iframe(f"""
-<!DOCTYPE html><html><head><script src="https://d3js.org/d3.v7.min.js"></script>
-<style>
-* {{ box-sizing:border-box; }} body {{ margin:0; font-family:'Segoe UI',sans-serif; background:#fafafa; }}
-#container {{ width:100%; height:550px; background:white; border:1px solid #ddd; border-radius:6px; position:relative; overflow:hidden; }}
-#stats {{ position:absolute; top:8px; left:10px; font-size:11px; color:#666; background:rgba(255,255,255,.9);
-  padding:3px 8px; border-radius:4px; border:1px solid #eee; z-index:10; }}
-#hint {{ position:absolute; bottom:6px; left:10px; font-size:10px; color:#aaa; }}
-.tooltip {{ position:fixed; background:white; border:1px solid #ccc; border-radius:6px; padding:8px 12px;
-  font-size:12px; pointer-events:none; box-shadow:2px 2px 6px rgba(0,0,0,.15); display:none; z-index:1000; }}
-</style></head><body>
-<div id="container">
-  <div id="stats">{_nn} nodes &middot; {_ne} edges &middot; {_n_comp} components</div>
-  <div id="hint">Drag nodes &middot; Scroll to zoom &middot; Hover for details</div>
-</div>
-<div class="tooltip" id="tooltip"></div>
-<script>
-try {{
-var nodes={_nj}, edges={_ej}, tooltip=d3.select("#tooltip");
-var el=document.getElementById("container"), W=el.offsetWidth||800, H=550;
-var svg=d3.select("#container").append("svg").attr("width",W).attr("height",H);
-var g=svg.append("g");
-svg.call(d3.zoom().scaleExtent([.2,5]).on("zoom",function(ev){{g.attr("transform",ev.transform);}}));
-var sim=d3.forceSimulation(nodes)
-  .force("link",d3.forceLink(edges).id(function(d){{return d.id;}}).distance(function(d){{return 120-d.weight*60;}}).strength(.4))
-  .force("charge",d3.forceManyBody().strength(-250))
-  .force("center",d3.forceCenter(W/2,H/2))
-  .force("collide",d3.forceCollide(20));
-var link=g.append("g").selectAll("line").data(edges).enter().append("line")
-  .attr("stroke","#bbb").attr("stroke-width",function(d){{return Math.max(1,d.weight*6);}}).attr("opacity",.35);
-var node=g.append("g").selectAll("g").data(nodes).enter().append("g").style("cursor","pointer")
-  .call(d3.drag().on("start",function(ev,d){{if(!ev.active)sim.alphaTarget(.3).restart();d.fx=d.x;d.fy=d.y;}})
+    <!DOCTYPE html><html><head><script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+    * {{ box-sizing:border-box; }} body {{ margin:0; font-family:'Segoe UI',sans-serif; background:#fafafa; }}
+    #container {{ width:100%; height:550px; background:white; border:1px solid #ddd; border-radius:6px; position:relative; overflow:hidden; }}
+    #stats {{ position:absolute; top:8px; left:10px; font-size:11px; color:#666; background:rgba(255,255,255,.9);
+      padding:3px 8px; border-radius:4px; border:1px solid #eee; z-index:10; }}
+    #hint {{ position:absolute; bottom:6px; left:10px; font-size:10px; color:#aaa; }}
+    .tooltip {{ position:fixed; background:white; border:1px solid #ccc; border-radius:6px; padding:8px 12px;
+      font-size:12px; pointer-events:none; box-shadow:2px 2px 6px rgba(0,0,0,.15); display:none; z-index:1000; }}
+    </style></head><body>
+    <div id="container">
+      <div id="stats">{_nn} nodes &middot; {_ne} edges &middot; {_n_comp} components</div>
+      <div id="hint">Drag nodes &middot; Scroll to zoom &middot; Hover for details</div>
+    </div>
+    <div class="tooltip" id="tooltip"></div>
+    <script>
+    try {{
+    var nodes={_nj}, edges={_ej}, tooltip=d3.select("#tooltip");
+    var el=document.getElementById("container"), W=el.offsetWidth||800, H=550;
+    var svg=d3.select("#container").append("svg").attr("width",W).attr("height",H);
+    var g=svg.append("g");
+    svg.call(d3.zoom().scaleExtent([.2,5]).on("zoom",function(ev){{g.attr("transform",ev.transform);}}));
+    var sim=d3.forceSimulation(nodes)
+      .force("link",d3.forceLink(edges).id(function(d){{return d.id;}}).distance(function(d){{return 120-d.weight*60;}}).strength(.4))
+      .force("charge",d3.forceManyBody().strength(-250))
+      .force("center",d3.forceCenter(W/2,H/2))
+      .force("collide",d3.forceCollide(20));
+    var link=g.append("g").selectAll("line").data(edges).enter().append("line")
+      .attr("stroke","#bbb").attr("stroke-width",function(d){{return Math.max(1,d.weight*6);}}).attr("opacity",.35);
+    var node=g.append("g").selectAll("g").data(nodes).enter().append("g").style("cursor","pointer")
+      .call(d3.drag().on("start",function(ev,d){{if(!ev.active)sim.alphaTarget(.3).restart();d.fx=d.x;d.fy=d.y;}})
     .on("drag",function(ev,d){{d.fx=ev.x;d.fy=ev.y;}})
     .on("end",function(ev,d){{if(!ev.active)sim.alphaTarget(0);d.fx=null;d.fy=null;}}));
-node.append("circle").attr("r",function(d){{return d.isPseudo?12:8;}}).attr("fill",function(d){{return d.color;}})
-  .attr("stroke",function(d){{return d.isPseudo?"#B8860B":"#555";}}).attr("stroke-width",function(d){{return d.isPseudo?2.5:1.2;}});
-node.append("text").attr("dx",14).attr("dy",4).style("font-size","10px").style("fill","#333")
-  .text(function(d){{return d.label.length>18?d.label.substring(0,18)+"…":d.label;}});
-node.on("mouseover",function(event,d){{
-  link.attr("opacity",function(l){{var s=l.source.id||l.source,t=l.target.id||l.target;return(s===d.id||t===d.id)?.8:.04;}})
+    node.append("circle").attr("r",function(d){{return d.isPseudo?12:8;}}).attr("fill",function(d){{return d.color;}})
+      .attr("stroke",function(d){{return d.isPseudo?"#B8860B":"#555";}}).attr("stroke-width",function(d){{return d.isPseudo?2.5:1.2;}});
+    node.append("text").attr("dx",14).attr("dy",4).style("font-size","10px").style("fill","#333")
+      .text(function(d){{return d.label.length>18?d.label.substring(0,18)+"…":d.label;}});
+    node.on("mouseover",function(event,d){{
+      link.attr("opacity",function(l){{var s=l.source.id||l.source,t=l.target.id||l.target;return(s===d.id||t===d.id)?.8:.04;}})
     .attr("stroke",function(l){{var s=l.source.id||l.source,t=l.target.id||l.target;return(s===d.id||t===d.id)?"#555":"#bbb";}});
-  node.select("circle").attr("opacity",function(n){{if(n.id===d.id)return 1;
+      node.select("circle").attr("opacity",function(n){{if(n.id===d.id)return 1;
     return edges.some(function(l){{var s=l.source.id||l.source,t=l.target.id||l.target;return(s===d.id&&t===n.id)||(t===d.id&&s===n.id);}})?1:.12;}});
-  node.select("text").attr("opacity",function(n){{if(n.id===d.id)return 1;
+      node.select("text").attr("opacity",function(n){{if(n.id===d.id)return 1;
     return edges.some(function(l){{var s=l.source.id||l.source,t=l.target.id||l.target;return(s===d.id&&t===n.id)||(t===d.id&&s===n.id);}})?1:.12;}});
-  var conns=edges.filter(function(l){{var s=l.source.id||l.source,t=l.target.id||l.target;return s===d.id||t===d.id;}});
-  tooltip.style("display","block").html("<strong>"+d.label+"</strong> "+(d.isPseudo?"★ Pseudonym":"")
+      var conns=edges.filter(function(l){{var s=l.source.id||l.source,t=l.target.id||l.target;return s===d.id||t===d.id;}});
+      tooltip.style("display","block").html("<strong>"+d.label+"</strong> "+(d.isPseudo?"★ Pseudonym":"")
     +"<br/>"+d.sub_type+"<br/>"+conns.length+" connections")
     .style("left",(event.clientX+14)+"px").style("top",(event.clientY-20)+"px");
-}}).on("mouseout",function(){{link.attr("opacity",.35).attr("stroke","#bbb");node.select("circle").attr("opacity",1);node.select("text").attr("opacity",1);tooltip.style("display","none");}});
-sim.on("tick",function(){{
-  link.attr("x1",function(d){{return d.source.x;}}).attr("y1",function(d){{return d.source.y;}})
+    }}).on("mouseout",function(){{link.attr("opacity",.35).attr("stroke","#bbb");node.select("circle").attr("opacity",1);node.select("text").attr("opacity",1);tooltip.style("display","none");}});
+    sim.on("tick",function(){{
+      link.attr("x1",function(d){{return d.source.x;}}).attr("y1",function(d){{return d.source.y;}})
     .attr("x2",function(d){{return d.target.x;}}).attr("y2",function(d){{return d.target.y;}});
-  node.attr("transform",function(d){{return "translate("+d.x+","+d.y+")";}});
-}});
-}} catch(e){{ document.getElementById("container").innerHTML="<pre style='color:red'>"+e.message+"</pre>"; }}
-</script></body></html>
+      node.attr("transform",function(d){{return "translate("+d.x+","+d.y+")";}});
+    }});
+    }} catch(e){{ document.getElementById("container").innerHTML="<pre style='color:red'>"+e.message+"</pre>"; }}
+    </script></body></html>
         """, width="100%", height="570px")
     else:
         _force_iframe = mo.md(f"*No entity pairs with similarity ≥ {_thresh:.2f}*")
@@ -4520,7 +4504,6 @@ def _(
     entity_type_filter,
     json_lib,
     mo,
-    pd,
     pseudonym_df,
     q3_comm_matrix,
 ):
@@ -4556,53 +4539,53 @@ def _(
     if _features:
         _fj = json_lib.dumps(_features)
         _par_iframe = mo.iframe(f"""
-<!DOCTYPE html><html><head><script src="https://d3js.org/d3.v7.min.js"></script>
-<style>
-* {{ box-sizing:border-box; }} body {{ margin:0; font-family:'Segoe UI',sans-serif; background:#fafafa; }}
-#container {{ background:white; border:1px solid #ddd; border-radius:6px; padding:14px; overflow:auto; }}
-.tooltip {{ position:fixed; background:white; border:1px solid #ccc; border-radius:6px; padding:8px 12px;
-  font-size:12px; pointer-events:none; box-shadow:2px 2px 6px rgba(0,0,0,.15); display:none; z-index:1000; }}
-path.entity-line {{ fill:none; stroke-width:1.5; opacity:.5; cursor:pointer; }}
-path.entity-line:hover {{ stroke-width:3; opacity:1; }}
-.axis-label {{ font-size:10px; fill:#444; font-weight:bold; }}
-</style></head><body>
-<div id="container"><div id="chart"></div></div>
-<div class="tooltip" id="tooltip"></div>
-<script>
-try {{
-var data={_fj}, tooltip=d3.select("#tooltip");
-var dims=["typeCode","pseudoScore","sent","received","partners","hours"];
-var dimLabels={{"typeCode":"Entity Type","pseudoScore":"Pseudonym Score","sent":"Messages Sent","received":"Messages Received","partners":"Unique Partners","hours":"Active Hours"}};
-var m={{top:30,right:40,bottom:10,left:40}}, W=800, H=420;
-var plotW=W-m.left-m.right, plotH=H-m.top-m.bottom;
-var svg=d3.select("#chart").append("svg").attr("width",W).attr("height",H);
-var g=svg.append("g").attr("transform","translate("+m.left+","+m.top+")");
-var yScales={{}};
-dims.forEach(function(d){{
-  var ext=d3.extent(data,function(r){{return r[d];}});
-  if(d==="typeCode") yScales[d]=d3.scalePoint().domain([0,1,2,3]).range([plotH,0]);
-  else yScales[d]=d3.scaleLinear().domain([ext[0],Math.max(ext[1],1)]).range([plotH,0]);
-}});
-var xScale=d3.scalePoint().domain(dims).range([0,plotW]).padding(.1);
-var line=d3.line().defined(function(d){{return !isNaN(d[1]);}});
-g.selectAll("path.entity-line").data(data).enter().append("path").attr("class","entity-line")
-  .attr("d",function(d){{return line(dims.map(function(dim){{return [xScale(dim),yScales[dim](d[dim])];}}))}})
-  .attr("stroke",function(d){{return d.isPseudo?"#FFD700":"#4ECDC4";}})
-  .attr("opacity",function(d){{return d.isPseudo?.7:.35;}})
-  .on("mouseover",function(event,d){{ d3.select(this).attr("stroke-width",3.5).attr("opacity",1);
+    <!DOCTYPE html><html><head><script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+    * {{ box-sizing:border-box; }} body {{ margin:0; font-family:'Segoe UI',sans-serif; background:#fafafa; }}
+    #container {{ background:white; border:1px solid #ddd; border-radius:6px; padding:14px; overflow:auto; }}
+    .tooltip {{ position:fixed; background:white; border:1px solid #ccc; border-radius:6px; padding:8px 12px;
+      font-size:12px; pointer-events:none; box-shadow:2px 2px 6px rgba(0,0,0,.15); display:none; z-index:1000; }}
+    path.entity-line {{ fill:none; stroke-width:1.5; opacity:.5; cursor:pointer; }}
+    path.entity-line:hover {{ stroke-width:3; opacity:1; }}
+    .axis-label {{ font-size:10px; fill:#444; font-weight:bold; }}
+    </style></head><body>
+    <div id="container"><div id="chart"></div></div>
+    <div class="tooltip" id="tooltip"></div>
+    <script>
+    try {{
+    var data={_fj}, tooltip=d3.select("#tooltip");
+    var dims=["typeCode","pseudoScore","sent","received","partners","hours"];
+    var dimLabels={{"typeCode":"Entity Type","pseudoScore":"Pseudonym Score","sent":"Messages Sent","received":"Messages Received","partners":"Unique Partners","hours":"Active Hours"}};
+    var m={{top:30,right:40,bottom:10,left:40}}, W=800, H=420;
+    var plotW=W-m.left-m.right, plotH=H-m.top-m.bottom;
+    var svg=d3.select("#chart").append("svg").attr("width",W).attr("height",H);
+    var g=svg.append("g").attr("transform","translate("+m.left+","+m.top+")");
+    var yScales={{}};
+    dims.forEach(function(d){{
+      var ext=d3.extent(data,function(r){{return r[d];}});
+      if(d==="typeCode") yScales[d]=d3.scalePoint().domain([0,1,2,3]).range([plotH,0]);
+      else yScales[d]=d3.scaleLinear().domain([ext[0],Math.max(ext[1],1)]).range([plotH,0]);
+    }});
+    var xScale=d3.scalePoint().domain(dims).range([0,plotW]).padding(.1);
+    var line=d3.line().defined(function(d){{return !isNaN(d[1]);}});
+    g.selectAll("path.entity-line").data(data).enter().append("path").attr("class","entity-line")
+      .attr("d",function(d){{return line(dims.map(function(dim){{return [xScale(dim),yScales[dim](d[dim])];}}))}})
+      .attr("stroke",function(d){{return d.isPseudo?"#FFD700":"#4ECDC4";}})
+      .attr("opacity",function(d){{return d.isPseudo?.7:.35;}})
+      .on("mouseover",function(event,d){{ d3.select(this).attr("stroke-width",3.5).attr("opacity",1);
     tooltip.style("display","block").html("<b>"+d.label+"</b> ("+(d.isPseudo?"★ Pseudonym":"Real name")+")"
       +"<br/>Type: "+d.type+"<br/>Sent: "+d.sent+" | Received: "+d.received+"<br/>Partners: "+d.partners+" | Hours: "+d.hours)
       .style("left",(event.clientX+14)+"px").style("top",(event.clientY-20)+"px"); }})
-  .on("mouseout",function(event,d){{ d3.select(this).attr("stroke-width",1.5).attr("opacity",d.isPseudo?.7:.35); tooltip.style("display","none"); }});
-dims.forEach(function(dim){{
-  var axG=g.append("g").attr("transform","translate("+xScale(dim)+",0)");
-  if(dim==="typeCode") axG.call(d3.axisLeft(yScales[dim]).tickFormat(function(v){{return ["Person","Vessel","Org","Group"][v]||"";}}));
-  else axG.call(d3.axisLeft(yScales[dim]).ticks(5));
-  axG.selectAll("text").style("font-size","8px");
-  axG.append("text").attr("class","axis-label").attr("y",-12).attr("text-anchor","middle").text(dimLabels[dim]);
-}});
-}} catch(e){{ document.getElementById("container").innerHTML="<pre style='color:red'>"+e.message+"</pre>"; }}
-</script></body></html>
+      .on("mouseout",function(event,d){{ d3.select(this).attr("stroke-width",1.5).attr("opacity",d.isPseudo?.7:.35); tooltip.style("display","none"); }});
+    dims.forEach(function(dim){{
+      var axG=g.append("g").attr("transform","translate("+xScale(dim)+",0)");
+      if(dim==="typeCode") axG.call(d3.axisLeft(yScales[dim]).tickFormat(function(v){{return ["Person","Vessel","Org","Group"][v]||"";}}));
+      else axG.call(d3.axisLeft(yScales[dim]).ticks(5));
+      axG.selectAll("text").style("font-size","8px");
+      axG.append("text").attr("class","axis-label").attr("y",-12).attr("text-anchor","middle").text(dimLabels[dim]);
+    }});
+    }} catch(e){{ document.getElementById("container").innerHTML="<pre style='color:red'>"+e.message+"</pre>"; }}
+    </script></body></html>
         """, width="100%", height="460px")
     else:
         _par_iframe = mo.md("*No entity data available*")
@@ -4752,7 +4735,7 @@ def _(likely_pseudonyms, mo, sim_threshold, similarity_df):
         f"**Top Resolution Candidates** (at current threshold {_thresh:.2f}):\n"
         f"{_top_pairs_text}"
     )
-    return (q3_findings,)
+    return
 
 
 @app.cell(hide_code=True)
